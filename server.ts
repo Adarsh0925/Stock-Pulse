@@ -5,15 +5,7 @@ if (dns.setDefaultResultOrder) {
 
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
-
-import { stockService, PROMINENT_STOCKS } from './server/services/stockService';
-import { getNifty50Data } from './server/services/marketData';
-import { getLexicon, addCustomWord, deleteCustomWord } from './server/services/lexiconService';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const PROMINENT_STOCKS = [
   { ticker: 'HDFCBANK.NS', name: 'HDFC Bank Limited', exchange: 'NSE', sector: 'Banking & Financials' },
