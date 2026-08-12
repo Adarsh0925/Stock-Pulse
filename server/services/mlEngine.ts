@@ -43,7 +43,7 @@ class RandomForestClassifier {
   private maxDepth: number;
   private minSamplesSplit: number;
 
-  constructor(numTrees = 25, maxDepth = 4, minSamplesSplit = 4) {
+  constructor(numTrees = 60, maxDepth = 5, minSamplesSplit = 3) {
     this.numTrees = numTrees;
     this.maxDepth = maxDepth;
     this.minSamplesSplit = minSamplesSplit;
@@ -60,7 +60,8 @@ class RandomForestClassifier {
   private buildTree(X: number[][], y: number[], depth = 0): TreeNode {
     const numSamples = X.length;
     const count1 = y.filter(val => val === 1).length;
-    const probUp = numSamples > 0 ? count1 / numSamples : 0.5;
+    // Laplace smoothing for leaf probability calibration
+    const probUp = (count1 + 1) / (numSamples + 2);
 
     // Base conditions for leaf node
     if (
@@ -77,9 +78,9 @@ class RandomForestClassifier {
     }
 
     const numFeatures = X[0].length;
-    // Subsample sqrt(numFeatures) features
     const featureIndices: number[] = [];
-    while (featureIndices.length < Math.max(2, Math.floor(Math.sqrt(numFeatures)))) {
+    const numToSelect = Math.max(3, Math.floor(Math.sqrt(numFeatures)) + 1);
+    while (featureIndices.length < Math.min(numFeatures, numToSelect)) {
       const idx = Math.floor(Math.random() * numFeatures);
       if (!featureIndices.includes(idx)) featureIndices.push(idx);
     }
@@ -96,9 +97,8 @@ class RandomForestClassifier {
 
     for (const fIdx of featureIndices) {
       const values = X.map(row => row[fIdx]).sort((a, b) => a - b);
-      // Sample a subset of candidate thresholds
       const candidateThresholds: number[] = [];
-      const step = Math.max(1, Math.floor(values.length / 10));
+      const step = Math.max(1, Math.floor(values.length / 12));
       for (let k = 0; k < values.length - 1; k += step) {
         candidateThresholds.push((values[k] + values[k + 1]) / 2);
       }
@@ -339,8 +339,8 @@ export function runMLEngine(ticker: string, candles: Candle[]): MLPrediction {
   const testX = testRows.map(r => r.features);
   const testY = testRows.map(r => r.target);
 
-  // Train RandomForestClassifier
-  const rf = new RandomForestClassifier(30, 4, 4);
+  // Train RandomForestClassifier with 80 trees and maxDepth 5
+  const rf = new RandomForestClassifier(80, 5, 3);
   rf.fit(trainX, trainY);
 
   // Out-of-Sample Test Evaluation

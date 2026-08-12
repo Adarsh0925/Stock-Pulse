@@ -2,5 +2,5 @@
   "name": "Stock Market Research & Prediction System",
   "description": "Real-time stock market analysis, technical indicators, fundamental data, news sentiment NLP, and machine learning prediction engine.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

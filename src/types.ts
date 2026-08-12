@@ -33,6 +33,8 @@ export interface CompanyQuote {
   timestamp: string;
   data_source: string;
   status: string;
+  consensus_status?: string;
+  sources_checked?: any[];
   error_reason?: string | null;
 }
 
@@ -107,6 +109,8 @@ export interface TechnicalData {
   macd: number | null;
   macd_signal: number | null;
   macd_hist: number | null;
+  macd_histogram?: number | null;
+  ma_description?: string | null;
   support: number | null;
   resistance: number | null;
   volume_trend: string | null;
@@ -185,6 +189,7 @@ export interface ResearchReport {
   research_signal: 'BUY' | 'HOLD' | 'SELL' | 'INSUFFICIENT DATA';
   signal_explanation: string;
   provenance_summary: Record<string, any>;
+  provenance_details?: Record<string, any>;
   timestamp: string;
   status: string;
 }

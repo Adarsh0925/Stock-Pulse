@@ -14,7 +14,7 @@ export const MethodologyView: React.FC = () => {
             </div>
             <h2 className="text-2xl font-bold text-slate-100">5-Source Consensus & Scoring Formulas</h2>
             <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              Understand our 5 compulsory source validation architecture (including NSE, Yahoo, Stooq, ChatGPT/Gemini AI, and Verified OHLCV) requiring at least 4 matching sources before displaying market outputs.
+              Understand our 5 compulsory source validation architecture (including NSE, Yahoo, Stooq, Financial Data Proxy, and Verified OHLCV) requiring multi-source matching before displaying market outputs.
             </p>
           </div>
           <div className="flex items-center gap-3 bg-slate-950/60 px-4 py-2.5 rounded-xl border border-slate-800 text-xs font-mono">
@@ -54,8 +54,8 @@ export const MethodologyView: React.FC = () => {
             <span className="text-[11px] text-slate-400">Independent global market data provider</span>
           </div>
           <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-            <span className="text-amber-400 font-bold block mb-1">4. ChatGPT / Gemini AI Engine</span>
-            <span className="text-[11px] text-slate-400">Compulsory AI valuation & model alignment</span>
+            <span className="text-cyan-400 font-bold block mb-1">4. Financial Data API Proxy</span>
+            <span className="text-[11px] text-slate-400">Institutional market data API proxy feed</span>
           </div>
           <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
             <span className="text-emerald-400 font-bold block mb-1">5. Verified OHLCV Feed</span>
