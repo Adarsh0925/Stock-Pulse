@@ -7,6 +7,10 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 
+import { stockService } from './server/services/stockService';
+import { getNifty50Data } from './server/services/marketData';
+import { getLexicon, addCustomWord, deleteCustomWord } from './server/services/lexiconService';
+
 const PROMINENT_STOCKS = [
   { ticker: 'HDFCBANK.NS', name: 'HDFC Bank Limited', exchange: 'NSE', sector: 'Banking & Financials' },
   { ticker: 'RELIANCE.NS', name: 'Reliance Industries Limited', exchange: 'NSE', sector: 'Energy & Petrochemicals' },
