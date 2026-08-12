@@ -1,11 +1,16 @@
 export interface Nifty50Data {
-  index_name: string;
-  symbol: string;
+  index_name?: string;
+  symbol?: string;
+  ticker?: string;
   current_price: number | null;
   previous_close: number | null;
   change: number | null;
   change_percent: number | null;
   market_status: string;
+  status?: string;
+  open_price?: number | null;
+  high_52w?: number | null;
+  low_52w?: number | null;
   timestamp: string;
   data_source: string;
   details?: Record<string, any>;
