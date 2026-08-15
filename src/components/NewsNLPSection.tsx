@@ -83,7 +83,7 @@ export const NewsNLPSection: React.FC<NewsNLPSectionProps> = ({
                     ? 'bg-red-50 text-red-700 border-red-200'
                     : 'bg-gray-100 text-slate-700 border-gray-200'
                 }`}>
-                  MOOD: {moodLabel.toUpperCase()}
+                  MOOD: {(moodLabel || 'Neutral').toUpperCase()}
                 </span>
               </div>
             </div>

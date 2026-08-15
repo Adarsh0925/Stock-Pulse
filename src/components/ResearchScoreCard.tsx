@@ -175,7 +175,8 @@ export const ResearchScoreCard: React.FC<ResearchScoreCardProps> = ({
               'ML PREDICTION': 'Computer Model',
               'COMPUTER MODEL': 'Computer Model'
             };
-            const displayCategory = labelMap[comp.category.toUpperCase()] || comp.category;
+            const catKey = (comp?.category || '').toUpperCase();
+            const displayCategory = labelMap[catKey] || comp?.category || 'Category';
             const isMlExcluded = displayCategory === 'Computer Model' && (comp.weight === 0 || comp.status?.includes('LOW CONFIDENCE') || comp.description?.includes('Not included'));
 
             return (

@@ -25,7 +25,7 @@ export const FundamentalsCard: React.FC<FundamentalsCardProps> = ({ fundamentals
     );
   }
 
-  const isBank = fundamentals.company_type === 'bank';
+  const isBank = (fundamentals.company_type || '').toLowerCase() === 'bank';
 
   // Tooltip simple explanations for common financial metrics
   const getMetricExplanation = (name: string) => {
@@ -161,8 +161,8 @@ export const FundamentalsCard: React.FC<FundamentalsCardProps> = ({ fundamentals
               </ul>
             </div>
             <div className="text-[11px] text-slate-500 pt-2 border-t border-gray-200 flex justify-between">
-              <span>Timestamp: {fundamentals.timestamp}</span>
-              <span>Classification: {fundamentals.company_type.toUpperCase()}</span>
+              <span>Timestamp: {fundamentals.timestamp || 'Latest'}</span>
+              <span>Classification: {(fundamentals.company_type || 'General').toUpperCase()}</span>
             </div>
           </div>
         )}
