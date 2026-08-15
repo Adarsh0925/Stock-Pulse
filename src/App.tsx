@@ -13,13 +13,28 @@ import { FinancialDictionaryView } from './components/FinancialDictionaryView';
 import { CustomNewsAnalyzerView } from './components/CustomNewsAnalyzerView';
 import { MLHubView } from './components/MLHubView';
 import { MethodologyView } from './components/MethodologyView';
+import { NiftySentimentView } from './components/NiftySentimentView';
 import { Footer } from './components/Footer';
 import { Nifty50Data, CompanySearchResult, ResearchReport } from './types';
 import { AlertCircle, Building2, Globe2, ShieldCheck, Cpu, ArrowUpRight } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('screener');
+  const [activeTab, setActiveTab] = useState<string>('nifty-sentiment');
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  const [isSimpleView, setIsSimpleView] = useState<boolean>(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('app_theme');
+    return saved === 'dark' ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('app_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   const [niftyData, setNiftyData] = useState<Nifty50Data | null>(null);
   const [selectedTicker, setSelectedTicker] = useState<string>('HDFCBANK.NS');
@@ -187,7 +202,7 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-cyan-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#F3F4F6] text-[#111827] dark:bg-[#0B1120] dark:text-[#F8FAFC] font-sans flex flex-col selection:bg-teal-700 selection:text-white transition-colors duration-200">
       {/* Website Top Header & Navigation */}
       <Header
         niftyData={niftyData}
@@ -202,12 +217,16 @@ export default function App() {
         onSelectTab={setActiveTab}
         isAdminMode={isAdminMode}
         onToggleAdminMode={() => setIsAdminMode(!isAdminMode)}
+        isSimpleView={isSimpleView}
+        onToggleSimpleView={() => setIsSimpleView(!isSimpleView)}
       />
 
       {/* Main Website Content Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
         {/* Render Tab Views */}
-        {activeTab === 'screener' ? (
+        {activeTab === 'nifty-sentiment' ? (
+          <NiftySentimentView isSimpleView={isSimpleView} niftyData={niftyData} />
+        ) : activeTab === 'screener' ? (
           <ScreenerView onSelectCompany={handleSelectCompany} />
         ) : activeTab === 'dictionary' ? (
           <FinancialDictionaryView />
@@ -221,10 +240,10 @@ export default function App() {
           /* Default: Research Dashboard View */
           <div className="space-y-6">
             {/* Stock Quick Selector Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800 text-xs font-mono">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm text-xs font-mono">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-cyan-400" /> Prominent Equities:
+                <span className="text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5 text-teal-700" /> Prominent Equities:
                 </span>
                 {sampleCompanies.map((c) => (
                   <button
@@ -232,8 +251,8 @@ export default function App() {
                     onClick={() => handleSelectCompany({ ticker: c.ticker, name: c.name, exchange: c?.ticker?.endsWith('.NS') ? 'NSE' : 'NASDAQ' })}
                     className={`px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                       selectedTicker === c.ticker
-                        ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-md shadow-cyan-500/10'
-                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-slate-100'
+                        ? 'bg-teal-700 text-white font-bold border-teal-700 shadow-sm'
+                        : 'bg-gray-50 text-slate-700 border-gray-200 hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
                     {c.name}
@@ -241,36 +260,36 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                <Globe2 className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                <Globe2 className="w-3.5 h-3.5 text-teal-700" />
                 <span>NSE India & US Exchanges</span>
               </div>
             </div>
 
             {/* Global Loading Spinner */}
             {isLoadingReport ? (
-              <div className="min-h-[400px] bg-slate-900/60 border border-slate-800 rounded-3xl p-12 flex flex-col items-center justify-center text-center space-y-4">
+              <div className="min-h-[400px] bg-white border border-gray-200 rounded-3xl p-12 flex flex-col items-center justify-center text-center space-y-4 shadow-sm">
                 <div className="relative">
-                  <div className="w-16 h-16 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin"></div>
-                  <div className="w-10 h-10 border-4 border-emerald-500/20 border-b-emerald-400 rounded-full animate-spin absolute top-3 left-3"></div>
+                  <div className="w-16 h-16 border-4 border-teal-200 border-t-teal-700 rounded-full animate-spin"></div>
+                  <div className="w-10 h-10 border-4 border-emerald-200 border-b-emerald-600 rounded-full animate-spin absolute top-3 left-3"></div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">Fetching Live Market Research Feeds...</h3>
-                  <p className="text-xs text-slate-400 font-mono mt-1">
+                  <h3 className="text-lg font-bold text-gray-900">Fetching Live Market Research Feeds...</h3>
+                  <p className="text-xs text-slate-500 font-mono mt-1">
                     Executing Pandas OHLCV Validation • VADER Financial NLP • Scikit-learn RandomForest ML
                   </p>
                 </div>
               </div>
             ) : errorReason ? (
-              <div className="bg-amber-950/40 border border-amber-800/80 rounded-2xl p-8 text-center space-y-3">
-                <AlertCircle className="w-10 h-10 text-amber-400 mx-auto" />
-                <div className="text-xl font-bold text-amber-300 font-mono">{errorReason}</div>
-                <p className="text-sm text-slate-400 max-w-md mx-auto">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center space-y-3 shadow-sm">
+                <AlertCircle className="w-10 h-10 text-amber-600 mx-auto" />
+                <div className="text-xl font-bold text-amber-900 font-mono">{errorReason}</div>
+                <p className="text-sm text-slate-600 max-w-md mx-auto">
                   The website strictly enforces data integrity standards. Re-query verified online market feeds.
                 </p>
                 <button
                   onClick={handleRefresh}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold font-mono transition-colors cursor-pointer"
+                  className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white border border-teal-700 rounded-xl text-xs font-bold font-mono transition-colors cursor-pointer shadow-sm"
                 >
                   Retry Live Connection
                 </button>
@@ -287,6 +306,7 @@ export default function App() {
                   explanation={researchReport.signal_explanation}
                   components={researchReport.score_components}
                   timestamp={researchReport.timestamp}
+                  isSimpleView={isSimpleView}
                 />
 
                 {/* 3. Historical Data & Technical Chart (Matplotlib Base64 + Recharts) */}
@@ -297,11 +317,8 @@ export default function App() {
                   ticker={selectedTicker}
                 />
 
-                {/* 4. Technical Analysis & Fundamental Analysis Split Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <TechnicalAnalysisCard technical={researchReport.technical} />
-                  <FundamentalsCard fundamentals={researchReport.fundamentals} ticker={selectedTicker} />
-                </div>
+                {/* 4. Technical Analysis & Price Trend */}
+                <TechnicalAnalysisCard technical={researchReport.technical} ticker={selectedTicker} isSimpleView={isSimpleView} />
 
                 {/* 5. Company News & NLP Sentiment Analysis */}
                 <NewsNLPSection
@@ -310,13 +327,14 @@ export default function App() {
                   selectedTimeFilter={selectedTimeFilter}
                   onSelectTimeFilter={handleNewsTimeFilterChange}
                   companyName={selectedCompanyName}
+                  isSimpleView={isSimpleView}
                 />
 
                 {/* 6. Scikit-learn Machine Learning Prediction Engine */}
-                <MLPredictionCard ml={researchReport.ml} ticker={selectedTicker} />
+                <MLPredictionCard ml={researchReport.ml} ticker={selectedTicker} isSimpleView={isSimpleView} />
 
-                {/* 7. Data Provenance & Transparency Audit */}
-                <ProvenanceSection report={researchReport} />
+                {/* 7. Company Financial Health & Fundamentals */}
+                <FundamentalsCard fundamentals={researchReport.fundamentals} ticker={selectedTicker} isSimpleView={isSimpleView} />
               </div>
             ) : null}
           </div>
@@ -329,6 +347,8 @@ export default function App() {
         activeTab={activeTab}
         isAdminMode={isAdminMode}
         onToggleAdminMode={() => setIsAdminMode(!isAdminMode)}
+        theme={theme}
+        onToggleTheme={setTheme}
       />
     </div>
   );

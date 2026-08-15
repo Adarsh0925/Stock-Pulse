@@ -26,19 +26,27 @@ export function isHeadlineRelevant(title: string, ticker: string, companyName: s
   const cleanTicker = ticker.replace('.NS', '').replace('.BO', '').toLowerCase();
   const cleanName = (companyName || '').toLowerCase();
 
-  // Special Check for HDFC Bank
+  // Special Entity Matching for HDFC Bank Limited (HDFCBANK.NS)
   if (cleanTicker === 'hdfcbank' || cleanName.includes('hdfc bank')) {
-    if ((t.includes('hdfc life') || t.includes('hdfc amc') || t.includes('hdfc ergo') || t.includes('hdfc mutual fund') || t.includes('hdfc securities')) &&
-        !t.includes('bank') && !t.includes('hdfcbank') && !t.includes('hdb')) {
+    // Exclude unrelated subsidiaries and separate entities unless specifically about HDFC Bank
+    if ((t.includes('hdfc life') || t.includes('hdfc amc') || t.includes('hdfc ergo') || 
+         t.includes('hdfc mutual fund') || t.includes('hdfc securities') || t.includes('hdb financial')) &&
+        !t.includes('bank') && !t.includes('hdfcbank')) {
       return false;
     }
-    if (!t.includes('hdfc') && !t.includes('hdb')) return false;
+    // Distinguish HDFCBANK from generic / unrelated "HDB" acronyms
+    if (t.includes('hdb') && !t.includes('hdfc') && !t.includes('bank')) {
+      return false;
+    }
+    if (!t.includes('hdfc') && !t.includes('hdfcbank')) {
+      return false;
+    }
     return true;
   }
 
-  // Reliance Industries
+  // Reliance Industries Limited (RELIANCE.NS)
   if (cleanTicker === 'reliance' || cleanName.includes('reliance')) {
-    if ((t.includes('reliance power') || t.includes('reliance capital') || t.includes('reliance infrastructure') || t.includes('reliance naval')) &&
+    if ((t.includes('reliance power') || t.includes('reliance capital') || t.includes('reliance infrastructure') || t.includes('reliance naval') || t.includes('rpower')) &&
         !t.includes('industries') && !t.includes('ril') && !t.includes('retail') && !t.includes('jio')) {
       return false;
     }
@@ -46,8 +54,20 @@ export function isHeadlineRelevant(title: string, ticker: string, companyName: s
     return true;
   }
 
+  // Tata Motors Limited (TATAMOTORS.NS)
+  if (cleanTicker === 'tatamotors' || cleanName.includes('tata motors')) {
+    if ((t.includes('tata steel') || t.includes('tata power') || t.includes('tata chemicals') || t.includes('tata consumer')) &&
+        !t.includes('motors') && !t.includes('jlr') && !t.includes('ev') && !t.includes('vehicle')) {
+      return false;
+    }
+    if (!t.includes('tata motors') && !t.includes('tatamotors') && !t.includes('jlr') && !t.includes('tata motor')) {
+      return false;
+    }
+    return true;
+  }
+
   // Generic token relevance check
-  const nameTokens = cleanName.split(/\s+/).filter(w => w.length > 2 && !['ltd', 'limited', 'inc', 'corp', 'group', 'bank', 'co'].includes(w));
+  const nameTokens = cleanName.split(/\s+/).filter(w => w.length > 2 && !['ltd', 'limited', 'inc', 'corp', 'group', 'bank', 'co', 'the'].includes(w));
   if (nameTokens.length > 0) {
     const matchesToken = nameTokens.some(token => t.includes(token));
     if (!matchesToken && !t.includes(cleanTicker)) {

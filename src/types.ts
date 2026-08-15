@@ -13,6 +13,35 @@ export interface Nifty50Data {
   low_52w?: number | null;
   timestamp: string;
   data_source: string;
+  session_info?: {
+    currentTimeIST: string;
+    currentDateIST: string;
+    currentDayName: string;
+    dayOfWeek: number;
+    isWeekend: boolean;
+    isHoliday: boolean;
+    holidayName?: string;
+    isMarketOpen: boolean;
+    statusBadge: string;
+    statusDetail: string;
+    lastTradingDate: string;
+    lastTradingFormatted: string;
+    nextTradingDate: string;
+    nextTradingFormatted: string;
+    validationChecks?: {
+      dayCheck: string;
+      timeCheck: string;
+      holidayCheck: string;
+      sessionAlignmentCheck: string;
+    };
+  };
+  validation_status?: {
+    isValid: boolean;
+    priceCheck: string;
+    mathCheck: string;
+    dateCheck: string;
+    sourcesCount: number;
+  };
   details?: Record<string, any>;
 }
 

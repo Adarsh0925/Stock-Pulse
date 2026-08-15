@@ -6,6 +6,7 @@ import { fetchFinancialProxyQuote } from './adapters/financialDataProxyAdapter';
 import { fetchMultiSourceNews } from './adapters/rssNewsAdapters';
 import { Candle } from '../services/marketData';
 import { SourceConsensus, ProviderQuote } from './sourceConsensus';
+import { MarketCapService } from '../services/marketCapService';
 
 function isNseMarketOpen(): boolean {
   const now = new Date();
@@ -138,12 +139,8 @@ export async function getUnifiedQuoteData(ticker: string, candles: Candle[]): Pr
     ? (isDelayed ? 'MARKET OPEN (15m DELAYED)' : 'LIVE REAL-TIME')
     : 'MARKET CLOSED — LAST VERIFIED CLOSE';
 
-  let capStr = 'N/A';
-  if (ticker.endsWith('.NS')) {
-    capStr = `₹${((finalPrice * 6700000000) / 10000000).toFixed(0)} Cr`;
-  } else {
-    capStr = `$${((finalPrice * 15000000000) / 1000000000).toFixed(2)} B`;
-  }
+  const capResult = MarketCapService.calculateAndValidateMarketCap(ticker, finalPrice);
+  const capStr = capResult.marketCapFormatted;
 
   return {
     current_price: Number(finalPrice.toFixed(2)),

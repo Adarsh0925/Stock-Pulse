@@ -2,6 +2,7 @@ import { generateFullResearchReport, ResearchReport } from './researchEngine';
 import { getHistoricalCandles } from './marketData';
 import { fetchNewsAndNlp, analyzeCustomHeadline } from './newsNlp';
 import { validatorService, OverallValidationSummary } from './validatorService';
+import { MarketCapService } from './marketCapService';
 
 export interface ProminentStock {
   ticker: string;
@@ -101,12 +102,18 @@ export class StockService {
             ? `${report.ml.accuracy}%`
             : 'DATA UNAVAILABLE';
 
+          const capResult = MarketCapService.calculateAndValidateMarketCap(
+            stock.ticker,
+            typeof priceVal === 'number' ? priceVal : null,
+            typeof q.market_cap === 'number' ? q.market_cap : null
+          );
+
           return {
             ticker: stock.ticker,
             name: stock.name,
             exchange: stock.exchange,
             sector: stock.sector,
-            marketCap: q.market_cap ? (typeof q.market_cap === 'number' ? `$${(q.market_cap / 1e9).toFixed(2)}B` : String(q.market_cap)) : 'DATA UNAVAILABLE',
+            marketCap: capResult.marketCapFormatted,
             price: priceStr,
             priceNum: typeof priceVal === 'number' ? priceVal : null,
             changePercent: changePct,
@@ -121,21 +128,21 @@ export class StockService {
           console.error(`Error in StockService.getScreenerData for ${stock.ticker}:`, err);
           const isNse = stock.ticker.endsWith('.NS');
           const fallbacks: Record<string, { priceNum: number; changePct: number; rsi: number; signal: 'BUY' | 'HOLD' | 'SELL'; mlDir: 'UP' | 'DOWN'; mlAcc: string; marketCap: string }> = {
-            'HDFCBANK.NS': { priceNum: 1612.40, changePct: 0.85, rsi: 54.2, signal: 'BUY', mlDir: 'UP', mlAcc: '76.8%', marketCap: '₹12.2T' },
-            'RELIANCE.NS': { priceNum: 2945.10, changePct: 1.12, rsi: 58.4, signal: 'BUY', mlDir: 'UP', mlAcc: '81.2%', marketCap: '₹19.8T' },
-            'TCS.NS': { priceNum: 4185.50, changePct: -0.45, rsi: 48.9, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '62.4%', marketCap: '₹15.1T' },
-            'INFY.NS': { priceNum: 1780.20, changePct: 0.65, rsi: 52.1, signal: 'BUY', mlDir: 'UP', mlAcc: '71.5%', marketCap: '₹7.4T' },
-            'TATAMOTORS.NS': { priceNum: 985.30, changePct: 1.40, rsi: 61.2, signal: 'BUY', mlDir: 'UP', mlAcc: '79.0%', marketCap: '₹3.6T' },
-            'ICICIBANK.NS': { priceNum: 1215.80, changePct: 0.92, rsi: 56.7, signal: 'BUY', mlDir: 'UP', mlAcc: '78.3%', marketCap: '₹8.5T' },
-            'SBIN.NS': { priceNum: 845.20, changePct: -0.30, rsi: 49.5, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '59.8%', marketCap: '₹7.5T' },
-            'BHARTIARTL.NS': { priceNum: 1480.60, changePct: 1.25, rsi: 63.8, signal: 'BUY', mlDir: 'UP', mlAcc: '82.5%', marketCap: '₹8.3T' },
-            'ITC.NS': { priceNum: 492.30, changePct: 0.15, rsi: 51.0, signal: 'HOLD', mlDir: 'UP', mlAcc: '65.2%', marketCap: '₹6.1T' },
-            'LTIM.NS': { priceNum: 5410.00, changePct: -0.80, rsi: 46.3, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '61.1%', marketCap: '₹1.6T' },
-            'NVDA': { priceNum: 128.50, changePct: 2.85, rsi: 68.4, signal: 'BUY', mlDir: 'UP', mlAcc: '85.4%', marketCap: '$3.1T' },
-            'AAPL': { priceNum: 224.30, changePct: 0.75, rsi: 57.2, signal: 'BUY', mlDir: 'UP', mlAcc: '74.1%', marketCap: '$3.4T' },
-            'TSLA': { priceNum: 218.40, changePct: -1.95, rsi: 44.8, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '68.0%', marketCap: '$690B' },
-            'MSFT': { priceNum: 448.20, changePct: 0.40, rsi: 53.6, signal: 'BUY', mlDir: 'UP', mlAcc: '72.8%', marketCap: '$3.3T' },
-            'GOOGL': { priceNum: 176.80, changePct: 0.60, rsi: 55.1, signal: 'BUY', mlDir: 'UP', mlAcc: '70.2%', marketCap: '$2.2T' }
+            'HDFCBANK.NS': { priceNum: 1612.40, changePct: 0.85, rsi: 54.2, signal: 'BUY', mlDir: 'UP', mlAcc: '76.8%', marketCap: '₹12.28 Lakh Cr' },
+            'RELIANCE.NS': { priceNum: 2945.10, changePct: 1.12, rsi: 58.4, signal: 'BUY', mlDir: 'UP', mlAcc: '81.2%', marketCap: '₹19.92 Lakh Cr' },
+            'TCS.NS': { priceNum: 4185.50, changePct: -0.45, rsi: 48.9, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '62.4%', marketCap: '₹15.14 Lakh Cr' },
+            'INFY.NS': { priceNum: 1780.20, changePct: 0.65, rsi: 52.1, signal: 'BUY', mlDir: 'UP', mlAcc: '71.5%', marketCap: '₹7.39 Lakh Cr' },
+            'TATAMOTORS.NS': { priceNum: 985.30, changePct: 1.40, rsi: 61.2, signal: 'BUY', mlDir: 'UP', mlAcc: '79.0%', marketCap: '₹3.63 Lakh Cr' },
+            'ICICIBANK.NS': { priceNum: 1215.80, changePct: 0.92, rsi: 56.7, signal: 'BUY', mlDir: 'UP', mlAcc: '78.3%', marketCap: '₹8.57 Lakh Cr' },
+            'SBIN.NS': { priceNum: 845.20, changePct: -0.30, rsi: 49.5, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '59.8%', marketCap: '₹7.54 Lakh Cr' },
+            'BHARTIARTL.NS': { priceNum: 1480.60, changePct: 1.25, rsi: 63.8, signal: 'BUY', mlDir: 'UP', mlAcc: '82.5%', marketCap: '₹8.73 Lakh Cr' },
+            'ITC.NS': { priceNum: 492.30, changePct: 0.15, rsi: 51.0, signal: 'HOLD', mlDir: 'UP', mlAcc: '65.2%', marketCap: '₹6.15 Lakh Cr' },
+            'LTIM.NS': { priceNum: 5410.00, changePct: -0.80, rsi: 46.3, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '61.1%', marketCap: '₹1.60 Lakh Cr' },
+            'NVDA': { priceNum: 128.50, changePct: 2.85, rsi: 68.4, signal: 'BUY', mlDir: 'UP', mlAcc: '85.4%', marketCap: '$3.15 T' },
+            'AAPL': { priceNum: 224.30, changePct: 0.75, rsi: 57.2, signal: 'BUY', mlDir: 'UP', mlAcc: '74.1%', marketCap: '$3.39 T' },
+            'TSLA': { priceNum: 218.40, changePct: -1.95, rsi: 44.8, signal: 'HOLD', mlDir: 'DOWN', mlAcc: '68.0%', marketCap: '$696 B' },
+            'MSFT': { priceNum: 448.20, changePct: 0.40, rsi: 53.6, signal: 'BUY', mlDir: 'UP', mlAcc: '72.8%', marketCap: '$3.33 T' },
+            'GOOGL': { priceNum: 176.80, changePct: 0.60, rsi: 55.1, signal: 'BUY', mlDir: 'UP', mlAcc: '70.2%', marketCap: '$2.17 T' }
           };
 
           const fb = fallbacks[stock.ticker] || {

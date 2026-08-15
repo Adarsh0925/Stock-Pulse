@@ -10,6 +10,7 @@ import { createServer as createViteServer } from 'vite';
 import { stockService } from './server/services/stockService';
 import { getNifty50Data } from './server/services/marketData';
 import { getLexicon, addCustomWord, deleteCustomWord } from './server/services/lexiconService';
+import { NiftySentimentService } from './server/services/niftySentimentService';
 
 const PROMINENT_STOCKS = [
   { ticker: 'HDFCBANK.NS', name: 'HDFC Bank Limited', exchange: 'NSE', sector: 'Banking & Financials' },
@@ -84,6 +85,55 @@ async function startServer() {
     }
   });
 
+  // 1b. NIFTY 50 Sentiment vs Market Analysis Endpoints
+  app.get('/api/nifty/sentiment-overview', async (req, res) => {
+    try {
+      const overview = await NiftySentimentService.getSentimentOverview();
+      res.json(overview);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to retrieve sentiment overview' });
+    }
+  });
+
+  app.get('/api/nifty/sentiment-history', async (req, res) => {
+    try {
+      let liveData = null;
+      try {
+        liveData = await getNifty50Data();
+      } catch (err) {
+        // Fallback to static dataset if live feed fails
+      }
+      const history = await NiftySentimentService.getSentimentHistory(liveData);
+      res.json(history);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to retrieve sentiment history' });
+    }
+  });
+
+  app.get('/api/nifty/sentiment-vs-market', (req, res) => {
+    try {
+      res.json(NiftySentimentService.getSentimentVsMarket());
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to retrieve sentiment vs market analysis' });
+    }
+  });
+
+  app.get('/api/nifty/prediction', (req, res) => {
+    try {
+      res.json(NiftySentimentService.getPredictionMetrics());
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to retrieve prediction metrics' });
+    }
+  });
+
+  app.get('/api/nifty/workflow', (req, res) => {
+    try {
+      res.json(NiftySentimentService.getWorkflow());
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to retrieve workflow' });
+    }
+  });
+
   // 2. Company Search Autocomplete Endpoint
   app.get('/api/company/search', (req, res) => {
     const q = (req.query.q as string || '').trim().toLowerCase();
@@ -127,6 +177,50 @@ async function startServer() {
         status: 'DATA UNAVAILABLE',
         error: 'Failed to generate research report'
       });
+    }
+  });
+
+  // 3b. Specific Quote Endpoint
+  app.get('/api/company/:ticker/quote', async (req, res) => {
+    try {
+      const ticker = req.params.ticker;
+      const report = await stockService.getStockResearch(ticker);
+      res.json(report.quote || { status: 'DATA UNAVAILABLE' });
+    } catch (e) {
+      res.status(500).json({ status: 'DATA UNAVAILABLE', error: 'Failed to fetch quote' });
+    }
+  });
+
+  // 3c. Specific Technical Indicators Endpoint
+  app.get('/api/company/:ticker/technicals', async (req, res) => {
+    try {
+      const ticker = req.params.ticker;
+      const report = await stockService.getStockResearch(ticker);
+      res.json(report.technical || { status: 'DATA UNAVAILABLE' });
+    } catch (e) {
+      res.status(500).json({ status: 'DATA UNAVAILABLE', error: 'Failed to fetch technical indicators' });
+    }
+  });
+
+  // 3d. Specific Fundamentals Endpoint
+  app.get('/api/company/:ticker/fundamentals', async (req, res) => {
+    try {
+      const ticker = req.params.ticker;
+      const report = await stockService.getStockResearch(ticker);
+      res.json(report.fundamentals || { status: 'DATA UNAVAILABLE' });
+    } catch (e) {
+      res.status(500).json({ status: 'DATA UNAVAILABLE', error: 'Failed to fetch fundamentals' });
+    }
+  });
+
+  // 3e. Specific Machine Learning Model Endpoint
+  app.get('/api/company/:ticker/ml', async (req, res) => {
+    try {
+      const ticker = req.params.ticker;
+      const report = await stockService.getStockResearch(ticker);
+      res.json(report.ml || { status: 'DATA UNAVAILABLE' });
+    } catch (e) {
+      res.status(500).json({ status: 'DATA UNAVAILABLE', error: 'Failed to fetch ML prediction' });
     }
   });
 

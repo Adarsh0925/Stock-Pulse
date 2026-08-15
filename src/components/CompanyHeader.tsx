@@ -10,12 +10,12 @@ interface CompanyHeaderProps {
 export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ quote, companyName }) => {
   if (!quote || quote.status === 'DATA UNAVAILABLE') {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-950/60 border border-amber-800/60 text-amber-300 font-mono text-sm rounded-lg mb-2">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 font-mono text-sm rounded-lg mb-2">
           DATA UNAVAILABLE
         </div>
-        <p className="text-slate-400 text-sm">
-          {quote?.error_reason || 'Real-time price feed is currently unavailable for this ticker.'}
+        <p className="text-slate-600 text-sm">
+          {quote?.error_reason || 'Latest market price feed is currently unavailable for this ticker.'}
         </p>
       </div>
     );
@@ -36,80 +36,78 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ quote, companyName
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/5 blur-3xl pointer-events-none rounded-full -mr-20 -mt-20"></div>
-
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
         {/* Company Title & Details */}
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2.5 py-1 bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 rounded-lg text-xs font-mono font-bold tracking-wider">
+            <span className="px-2.5 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-xs font-mono font-bold tracking-wider">
               {quote.ticker}
             </span>
-            <span className="px-2.5 py-1 bg-slate-800 text-slate-300 border border-slate-700/60 rounded-lg text-xs font-medium flex items-center gap-1">
-              <Building2 className="w-3 h-3 text-slate-400" />
+            <span className="px-2.5 py-1 bg-gray-100 text-slate-700 border border-gray-200 rounded-lg text-xs font-medium flex items-center gap-1">
+              <Building2 className="w-3 h-3 text-slate-500" />
               {quote.exchange}
             </span>
-            <span className="px-2.5 py-1 bg-slate-800 text-slate-300 border border-slate-700/60 rounded-lg text-xs font-medium flex items-center gap-1">
-              <Layers className="w-3 h-3 text-slate-400" />
+            <span className="px-2.5 py-1 bg-gray-100 text-slate-700 border border-gray-200 rounded-lg text-xs font-medium flex items-center gap-1">
+              <Layers className="w-3 h-3 text-slate-500" />
               {quote.sector || 'General'}
             </span>
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
             {companyName || quote.name}
           </h2>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 font-mono">
-            <span className="flex items-center gap-1 text-slate-400">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-mono">
+            <span className="flex items-center gap-1 text-slate-500">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
               Timestamp: {quote.timestamp}
             </span>
-            <span className="flex items-center gap-1 text-slate-400">
-              <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="flex items-center gap-1 text-slate-500">
+              <Database className="w-3.5 h-3.5 text-teal-700" />
               Source: {quote.data_source}
             </span>
           </div>
         </div>
 
         {/* Price & Metrics Grid */}
-        <div className="flex flex-wrap items-center gap-6 lg:gap-8 bg-slate-950/70 p-4 rounded-xl border border-slate-800/80">
+        <div className="flex flex-wrap items-center gap-6 lg:gap-8 bg-gray-50 p-4 rounded-xl border border-gray-200">
           <div>
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Current Price</div>
-            <div className="text-3xl font-black text-slate-100 font-mono">
+            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Current Price</div>
+            <div className="text-3xl font-black text-gray-900 font-mono">
               {typeof quote.current_price === 'number' ? `${currencySymbol}${quote.current_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : 'DATA UNAVAILABLE'}
             </div>
             {typeof quote.change === 'number' && typeof quote.change_percent === 'number' ? (
-              <div className={`flex items-center gap-1 font-bold text-sm mt-0.5 font-mono ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <div className={`flex items-center gap-1 font-bold text-sm mt-0.5 font-mono ${isPositive ? 'text-emerald-700' : 'text-red-700'}`}>
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {isPositive ? '+' : ''}{quote.change} ({isPositive ? '+' : ''}{quote.change_percent}%)
               </div>
             ) : null}
           </div>
 
-          <div className="h-10 w-px bg-slate-800 hidden sm:block"></div>
+          <div className="h-10 w-px bg-gray-200 hidden sm:block"></div>
 
           <div>
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Previous Close</div>
-            <div className="text-lg font-bold text-slate-200 font-mono">
+            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Previous Close</div>
+            <div className="text-lg font-bold text-gray-800 font-mono">
               {typeof quote.previous_close === 'number' ? `${currencySymbol}${quote.previous_close.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : 'DATA UNAVAILABLE'}
             </div>
           </div>
 
-          <div className="h-10 w-px bg-slate-800 hidden sm:block"></div>
+          <div className="h-10 w-px bg-gray-200 hidden sm:block"></div>
 
           <div>
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Volume</div>
-            <div className="text-lg font-bold text-slate-200 font-mono">
+            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Volume</div>
+            <div className="text-lg font-bold text-gray-800 font-mono">
               {typeof quote.volume === 'number' ? quote.volume.toLocaleString() : 'DATA UNAVAILABLE'}
             </div>
           </div>
 
-          <div className="h-10 w-px bg-slate-800 hidden sm:block"></div>
+          <div className="h-10 w-px bg-gray-200 hidden sm:block"></div>
 
           <div>
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Market Cap</div>
-            <div className="text-lg font-bold text-slate-200 font-mono">
+            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Market Cap</div>
+            <div className="text-lg font-bold text-gray-800 font-mono">
               {formatLargeNum(quote.market_cap)}
             </div>
           </div>

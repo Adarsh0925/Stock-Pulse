@@ -4,6 +4,7 @@ import { calculateFundamentals, FundamentalsData } from './fundamentals';
 import { fetchNewsAndNlp, NlpMetrics } from './newsNlp';
 import { runMLEngine, MLPrediction } from './mlEngine';
 import { getUnifiedQuoteData, getUnifiedNewsData } from '../sources/sourceManager';
+import { MarketCapService } from './marketCapService';
 
 export interface ScoreComponent {
   category: string;
@@ -19,7 +20,7 @@ export interface ResearchReport {
   ticker: string;
   quote: any;
   final_research_score: number | null;
-  research_signal: 'BUY BIAS' | 'HOLD BIAS' | 'SELL BIAS' | 'INSUFFICIENT DATA';
+  research_signal: 'BUY' | 'HOLD' | 'SELL' | 'INSUFFICIENT DATA';
   signal_explanation: string;
   score_components: ScoreComponent[];
   technical: any;
@@ -31,6 +32,72 @@ export interface ResearchReport {
   timestamp: string;
   status: string;
   provenance_details?: any;
+}
+
+/**
+ * Dynamically generates a clear, plain-language explanation of why a stock received BUY/HOLD/SELL
+ * using the actual calculated fundamental, price momentum, news, and computer model values.
+ */
+export function generateDynamicSignalExplanation(
+  signal: 'BUY' | 'HOLD' | 'SELL' | 'INSUFFICIENT DATA',
+  finalScore: number | null,
+  techScore: number,
+  fundScore: number,
+  nlpScore: number,
+  mlScore: number,
+  mlValid: boolean,
+  rawMl: any
+): string {
+  if (finalScore === null || signal === 'INSUFFICIENT DATA') {
+    return 'Research score cannot be calculated due to missing core market or fundamental data.';
+  }
+
+  // 1. Fundamentals appraisal
+  let fundText = '';
+  if (fundScore >= 18) {
+    fundText = "The company's financial numbers look strong with healthy profitability and manageable debt.";
+  } else if (fundScore >= 12) {
+    fundText = "The company's financial health is stable and within normal valuation ranges.";
+  } else {
+    fundText = "The company's financial ratios reflect higher valuation multiples or debt levels.";
+  }
+
+  // 2. Technical & News appraisal
+  let techNewsText = '';
+  const techPositive = techScore >= 18;
+  const nlpPositive = nlpScore >= 11;
+  const techWeak = techScore < 14;
+  const nlpWeak = nlpScore < 8;
+
+  if (techPositive && nlpPositive) {
+    techNewsText = "Recent price movement is positive and recent news headlines reflect an encouraging market mood.";
+  } else if (techWeak && nlpWeak) {
+    techNewsText = "Recent price momentum has softened and recent news stories are cautious.";
+  } else if (techPositive && !nlpPositive) {
+    techNewsText = "Recent price movement is positive, while recent news coverage is neutral or mixed.";
+  } else if (!techPositive && nlpPositive) {
+    techNewsText = "News mood is positive, though short-term price momentum is moving more slowly.";
+  } else {
+    techNewsText = "Recent price movement and news stories are mixed with no sharp directional move.";
+  }
+
+  // 3. Synthesis statement
+  let synthesisText = '';
+  if (signal === 'BUY') {
+    synthesisText = "Because the majority of financial and price indicators currently lean positive, the overall view is BUY.";
+  } else if (signal === 'SELL') {
+    synthesisText = "Because current price momentum and financial indicators are weaker, the overall view is SELL.";
+  } else {
+    synthesisText = "Because signals across price, financials, and news do not clearly point in one direction, the overall view is HOLD.";
+  }
+
+  // 4. ML Model note
+  let mlNote = '';
+  if (!mlValid) {
+    mlNote = " The computer model was not included because its recent test performance was too weak.";
+  }
+
+  return `${fundText} ${techNewsText} ${synthesisText}${mlNote}`;
 }
 
 export async function generateFullResearchReport(ticker: string, companyName?: string): Promise<ResearchReport> {
@@ -70,8 +137,18 @@ export async function generateFullResearchReport(ticker: string, companyName?: s
     const mlScore = mlValid ? rawMl.ml_score : 0; // max 20
 
     let finalScore: number | null = null;
-    let signal: 'BUY BIAS' | 'HOLD BIAS' | 'SELL BIAS' | 'INSUFFICIENT DATA' = 'INSUFFICIENT DATA';
+    let signal: 'BUY' | 'HOLD' | 'SELL' | 'INSUFFICIENT DATA' = 'INSUFFICIENT DATA';
     let explanation = '';
+
+    let techWeight = 0;
+    let fundWeight = 0;
+    let nlpWeight = 0;
+    let mlWeight = 0;
+
+    let techWeighted = 0;
+    let fundWeighted = 0;
+    let nlpWeighted = 0;
+    let mlWeighted = 0;
 
     // Core engines (Technical, Fundamental, News NLP) MUST be valid
     if (!techValid || !fundValid || !nlpValid) {
@@ -79,30 +156,55 @@ export async function generateFullResearchReport(ticker: string, companyName?: s
       signal = 'INSUFFICIENT DATA';
       explanation = 'Research score cannot be calculated due to missing core market or fundamental model inputs.';
     } else if (!mlValid) {
-      const sum3 = techScore + fundScore + nlpScore; // max 80
-      finalScore = Number(((sum3 / 80) * 100).toFixed(2));
+      // ML is excluded: 80 active points normalized to 100%
+      techWeight = Number((0.35 / 0.80).toFixed(4)); // 0.4375
+      fundWeight = Number((0.25 / 0.80).toFixed(4)); // 0.3125
+      nlpWeight = Number((0.20 / 0.80).toFixed(4));  // 0.2500
+      mlWeight = 0.00;
 
-      if (finalScore >= 65.0) {
-        signal = 'BUY BIAS';
-      } else if (finalScore >= 45.0) {
-        signal = 'HOLD BIAS';
-      } else {
-        signal = 'SELL BIAS';
-      }
+      techWeighted = Number(((techScore / 35) * 43.75).toFixed(1));
+      fundWeighted = Number(((fundScore / 25) * 31.25).toFixed(1));
+      nlpWeighted = Number(((nlpScore / 20) * 25.00).toFixed(1));
+      mlWeighted = 0.0;
 
-      explanation = `Composite Research Signal: ${signal} (${finalScore}/100 score). Normalized across Technicals (${techScore}/35 pts), Fundamentals (${fundScore}/25 pts), and News NLP (${nlpScore}/20 pts). Note: ML Model is flagged as LOW CONFIDENCE (Test Accuracy = ${rawMl.accuracy}%, F1 = ${rawMl.f1_score}%); ML weight was excluded and remaining 3 factors were normalized.`;
+      finalScore = Number((techWeighted + fundWeighted + nlpWeighted).toFixed(1));
+      signal = finalScore >= 65.0 ? 'BUY' : finalScore >= 45.0 ? 'HOLD' : 'SELL';
+
+      explanation = generateDynamicSignalExplanation(
+        signal,
+        finalScore,
+        techScore,
+        fundScore,
+        nlpScore,
+        mlScore,
+        false,
+        rawMl
+      );
     } else {
-      finalScore = Number((techScore + fundScore + nlpScore + mlScore).toFixed(2));
+      // ML is valid: standard weights summing to 1.0 (100%)
+      techWeight = 0.35;
+      fundWeight = 0.25;
+      nlpWeight = 0.20;
+      mlWeight = 0.20;
 
-      if (finalScore >= 65.0) {
-        signal = 'BUY BIAS';
-      } else if (finalScore >= 45.0) {
-        signal = 'HOLD BIAS';
-      } else {
-        signal = 'SELL BIAS';
-      }
+      techWeighted = Number(techScore.toFixed(1));
+      fundWeighted = Number(fundScore.toFixed(1));
+      nlpWeighted = Number(nlpScore.toFixed(1));
+      mlWeighted = Number(mlScore.toFixed(1));
 
-      explanation = `Composite Research Signal: ${signal} (${finalScore}/100 score). Quantitative research output indicates alignment across technical momentum (${techScore}/35 pts), fundamentals (${fundScore}/25 pts), news NLP (${nlpScore}/20 pts), and ML ensemble probability (${mlScore}/20 pts, Test Acc = ${rawMl.accuracy}%).`;
+      finalScore = Number((techWeighted + fundWeighted + nlpWeighted + mlWeighted).toFixed(1));
+      signal = finalScore >= 65.0 ? 'BUY' : finalScore >= 45.0 ? 'HOLD' : 'SELL';
+
+      explanation = generateDynamicSignalExplanation(
+        signal,
+        finalScore,
+        techScore,
+        fundScore,
+        nlpScore,
+        mlScore,
+        true,
+        rawMl
+      );
     }
 
     const defaultHistorical = candles1y.length > 65 ? candles1y.slice(-65) : candles1y;
@@ -269,37 +371,37 @@ export async function generateFullResearchReport(ticker: string, companyName?: s
 
     const scoreComponents: ScoreComponent[] = [
       {
-        category: 'Technical Indicators',
+        category: 'Price & Trend',
         raw_score: techValid ? Math.round((techScore / 35) * 100) : 0,
-        weight: mlValid ? 0.35 : Number((0.35 / 0.80).toFixed(4)),
-        weighted_score: mlValid ? techScore : Number(((techScore / 35) * 43.75).toFixed(2)),
-        description: 'Evaluation of SMA20/50, RSI(14), and MACD momentum indicators',
+        weight: techWeight,
+        weighted_score: techWeighted,
+        description: 'Price direction, 20/50-day moving averages, price strength, and momentum indicators',
         status: rawTechnical.status
       },
       {
-        category: 'Fundamental Statement Ratios',
+        category: 'Company Financial Health',
         raw_score: fundValid ? Math.round((fundScore / 25) * 100) : 0,
-        weight: mlValid ? 0.25 : Number((0.25 / 0.80).toFixed(4)),
-        weighted_score: mlValid ? fundScore : Number(((fundScore / 25) * 31.25).toFixed(2)),
-        description: 'Audited financial statement analysis (P/E, ROE, Net Margin, Debt/Equity)',
+        weight: fundWeight,
+        weighted_score: fundWeighted,
+        description: 'Audited financial statements (P/E, P/B, ROE, Profit Margin, Debt/Equity)',
         status: rawFundamentals.status
       },
       {
-        category: 'News NLP Sentiment',
+        category: 'News Mood',
         raw_score: nlpValid ? Math.round((nlpScore / 20) * 100) : 0,
-        weight: mlValid ? 0.20 : Number((0.20 / 0.80).toFixed(4)),
-        weighted_score: mlValid ? nlpScore : Number(((nlpScore / 20) * 25.0).toFixed(2)),
-        description: 'VADER sentiment aggregation of live Google News & financial press RSS headlines',
+        weight: nlpWeight,
+        weighted_score: nlpWeighted,
+        description: 'News sentiment aggregation of verified financial headlines',
         status: rawNlp.status
       },
       {
-        category: 'Machine Learning Probability',
+        category: 'Computer Model',
         raw_score: rawMl.status === 'SUCCESS' ? Math.round((mlScore / 20) * 100) : 0,
-        weight: mlValid ? 0.20 : 0.00,
-        weighted_score: mlValid ? mlScore : 0.00,
+        weight: mlWeight,
+        weighted_score: mlWeighted,
         description: mlValid
-          ? 'RandomForest ensemble probability model for next trading session'
-          : 'LOW CONFIDENCE MODEL (Test Accuracy < 50% or F1 = 0); weight excluded from research score',
+          ? 'Computer statistical prediction model for the next trading day'
+          : 'Computer Model: Not included in overall score (recent test performance below confidence threshold)',
         status: mlValid ? rawMl.confidence_status : 'LOW CONFIDENCE MODEL'
       }
     ];
@@ -346,9 +448,10 @@ export async function generateFullResearchReport(ticker: string, companyName?: s
     const change = Number((price - prevClose).toFixed(2));
     const changePct = Number(((change / prevClose) * 100).toFixed(2));
 
-    const isNse = ticker.endsWith('.NS');
+    const isNse = ticker.endsWith('.NS') || ticker.endsWith('.BO');
     const rawFundamentals = calculateFundamentals(ticker, price);
     const rawMl = runMLEngine(ticker, fallbackCandles);
+    const capResult = MarketCapService.calculateAndValidateMarketCap(ticker, price);
 
     const formattedQuote = {
       ticker,
@@ -358,7 +461,7 @@ export async function generateFullResearchReport(ticker: string, companyName?: s
       change,
       change_percent: changePct,
       volume: lastCandle.volume,
-      market_cap: isNse ? '₹12.2T' : '$3.1T',
+      market_cap: capResult.marketCapFormatted,
       exchange: isNse ? 'NSE' : 'NASDAQ',
       sector: isNse ? 'Indian Market Equity' : 'US Market Equity',
       timestamp: timestampStr,
@@ -504,8 +607,23 @@ export async function generateFullResearchReport(ticker: string, companyName?: s
       status: 'SUCCESS'
     };
 
-    const totalScore = Number((rawTechnical.technical_score + rawFundamentals.fundamental_score + 15 + rawMl.ml_score).toFixed(2));
-    const signal = totalScore >= 65 ? 'BUY BIAS' : totalScore >= 45 ? 'HOLD BIAS' : 'SELL BIAS';
+    const fallbackTechWeighted = Number(rawTechnical.technical_score.toFixed(1));
+    const fallbackFundWeighted = Number(rawFundamentals.fundamental_score.toFixed(1));
+    const fallbackNlpWeighted = 15.0;
+    const fallbackMlWeighted = Number(rawMl.ml_score.toFixed(1));
+    const totalScore = Number((fallbackTechWeighted + fallbackFundWeighted + fallbackNlpWeighted + fallbackMlWeighted).toFixed(1));
+    const signal: 'BUY' | 'HOLD' | 'SELL' = totalScore >= 65 ? 'BUY' : totalScore >= 45 ? 'HOLD' : 'SELL';
+
+    const explanation = generateDynamicSignalExplanation(
+      signal,
+      totalScore,
+      rawTechnical.technical_score,
+      rawFundamentals.fundamental_score,
+      15,
+      rawMl.ml_score,
+      true,
+      rawMl
+    );
 
     return {
       company_name: resolvedName,
@@ -513,12 +631,12 @@ export async function generateFullResearchReport(ticker: string, companyName?: s
       quote: formattedQuote,
       final_research_score: totalScore,
       research_signal: signal,
-      signal_explanation: `Composite Research Signal: ${signal} (${totalScore}/100 score). Verified benchmark model output across Technicals (${rawTechnical.technical_score}/35 pts), Fundamentals (${rawFundamentals.fundamental_score}/25 pts), and ML ensemble probability (${rawMl.ml_score}/20 pts).`,
+      signal_explanation: explanation,
       score_components: [
-        { category: 'Technical Indicators', raw_score: Math.round((rawTechnical.technical_score / 35) * 100), weight: 0.35, weighted_score: rawTechnical.technical_score, description: 'Evaluation of SMA20/50, RSI(14), and MACD momentum indicators', status: 'SUCCESS' },
-        { category: 'Fundamental Statement Ratios', raw_score: Math.round((rawFundamentals.fundamental_score / 25) * 100), weight: 0.25, weighted_score: rawFundamentals.fundamental_score, description: 'Audited financial statement analysis (P/E, ROE, Net Margin, Debt/Equity)', status: 'SUCCESS' },
-        { category: 'News NLP Sentiment', raw_score: 75, weight: 0.20, weighted_score: 15, description: 'VADER sentiment aggregation of financial news headlines', status: 'SUCCESS' },
-        { category: 'Machine Learning Probability', raw_score: Math.round((rawMl.ml_score / 20) * 100), weight: 0.20, weighted_score: rawMl.ml_score, description: 'RandomForest ensemble probability model', status: 'SUCCESS' }
+        { category: 'Price & Trend', raw_score: Math.round((rawTechnical.technical_score / 35) * 100), weight: 0.35, weighted_score: fallbackTechWeighted, description: 'Price direction, 20/50-day moving averages, price strength, and momentum indicators', status: 'SUCCESS' },
+        { category: 'Company Financial Health', raw_score: Math.round((rawFundamentals.fundamental_score / 25) * 100), weight: 0.25, weighted_score: fallbackFundWeighted, description: 'Audited financial statements (P/E, P/B, ROE, Profit Margin, Debt/Equity)', status: 'SUCCESS' },
+        { category: 'News Mood', raw_score: 75, weight: 0.20, weighted_score: fallbackNlpWeighted, description: 'News sentiment aggregation of verified financial headlines', status: 'SUCCESS' },
+        { category: 'Computer Model', raw_score: Math.round((rawMl.ml_score / 20) * 100), weight: 0.20, weighted_score: fallbackMlWeighted, description: 'Computer statistical prediction model for the next trading day', status: 'SUCCESS' }
       ],
       technical: formattedTechnical,
       fundamentals: formattedFundamentals,

@@ -2,11 +2,246 @@
 
 @layer base {
   body {
+    background-color: #F3F4F6;
+    color: #111827;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+  
+  html.dark body {
+    background-color: #0F172A;
+    color: #F8FAFC;
+  }
+
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+}
+
+/* ==========================================================================
+   Comprehensive Dark Mode Engine (Dark Grey Theme)
+   ========================================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Base Body & Container Backgrounds */
+html.dark body,
+html.dark #root,
+html.dark .min-h-screen {
+  background-color: #0B1120 !important;
+  color: #F8FAFC !important;
+}
+
+/* Cards & Surface Containers -> Dark Grey */
+html.dark .bg-white {
+  background-color: #1E293B !important;
+  color: #F8FAFC !important;
+}
+
+html.dark .bg-gray-50,
+html.dark .bg-gray-50\/50,
+html.dark .bg-slate-50,
+html.dark .bg-gray-100,
+html.dark .bg-gray-100\/70 {
+  background-color: #111827 !important;
+  color: #F1F5F9 !important;
+}
+
+html.dark .bg-gray-200,
+html.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+/* Borders in Dark Grey */
+html.dark .border-gray-200,
+html.dark .border-gray-100,
+html.dark .border-gray-300,
+html.dark .border-slate-200,
+html.dark .border-slate-100 {
+  border-color: #334155 !important;
+}
+
+/* Hover States -> MUST STAY DARK GREY, NEVER WHITE */
+html.dark tr:hover,
+html.dark tbody tr:hover,
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-50\/80:hover,
+html.dark .hover\:bg-gray-100:hover,
+html.dark .hover\:bg-gray-200:hover,
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover,
+html.dark .hover\:bg-slate-200:hover,
+html.dark .hover\:bg-white:hover,
+html.dark button.hover\:bg-gray-50:hover,
+html.dark button.hover\:bg-gray-100:hover,
+html.dark a.hover\:bg-gray-50:hover,
+html.dark a.hover\:bg-gray-100:hover {
+  background-color: #2D3748 !important;
+  color: #F8FAFC !important;
+}
+
+html.dark button:hover:not(.bg-teal-700):not(.bg-emerald-600):not(.bg-red-600):not(.bg-indigo-600) {
+  background-color: #2D3748 !important;
+}
+
+/* Text Readability in Dark Mode (High Contrast, Never Dark Text) */
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: #F8FAFC !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-gray-700 {
+  color: #E2E8F0 !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-gray-600 {
+  color: #CBD5E1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-gray-500 {
+  color: #94A3B8 !important;
+}
+
+html.dark .text-slate-400 {
+  color: #64748B !important;
+}
+
+/* Dividers in Dark Mode */
+html.dark .divide-gray-100 > * + *,
+html.dark .divide-gray-200 > * + *,
+html.dark .divide-slate-100 > * + *,
+html.dark .divide-slate-200 > * + * {
+  border-color: #334155 !important;
+}
+
+/* Custom Highlight & Badge Accents in Dark Mode */
+html.dark .bg-teal-50 {
+  background-color: rgba(15, 118, 110, 0.25) !important;
+  color: #2DD4BF !important;
+  border-color: rgba(45, 212, 191, 0.3) !important;
+}
+
+html.dark .bg-teal-50 strong,
+html.dark .bg-teal-50 span {
+  color: #2DD4BF !important;
+}
+
+html.dark .text-teal-600,
+html.dark .text-teal-700,
+html.dark .text-teal-800 {
+  color: #2DD4BF !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/70,
+html.dark .bg-amber-50\/90 {
+  background-color: #1A1813 !important;
+  border-color: #452D12 !important;
+}
+
+html.dark .bg-amber-100 {
+  background-color: #2D2013 !important;
+  border-color: #63431D !important;
+}
+
+html.dark .bg-amber-200,
+html.dark .bg-amber-200\/80 {
+  background-color: rgba(120, 53, 15, 0.45) !important;
+  border-color: rgba(217, 119, 6, 0.4) !important;
+  color: #FDE68A !important;
+}
+
+html.dark .border-amber-200,
+html.dark .border-amber-300,
+html.dark .border-amber-300\/80 {
+  border-color: #63431D !important;
+}
+
+html.dark .text-amber-500,
+html.dark .text-amber-600,
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900,
+html.dark .text-amber-950 {
+  color: #FDE68A !important;
+}
+
+html.dark .bg-emerald-50 {
+  background-color: rgba(5, 150, 105, 0.2) !important;
+  border-color: rgba(52, 211, 153, 0.35) !important;
+}
+
+html.dark .text-emerald-600,
+html.dark .text-emerald-700,
+html.dark .text-emerald-800,
+html.dark .text-emerald-900 {
+  color: #34D399 !important;
+}
+
+html.dark .bg-red-50 {
+  background-color: rgba(220, 38, 38, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.35) !important;
+}
+
+html.dark .text-red-600,
+html.dark .text-red-700,
+html.dark .text-red-800,
+html.dark .text-red-900 {
+  color: #F87171 !important;
+}
+
+/* ==========================================================================
+   Chart & Data Visualization Dark Mode Styling
+   ========================================================================== */
+html.dark .recharts-surface {
+  background-color: transparent !important;
+}
+
+html.dark .recharts-cartesian-grid line {
+  stroke: #334155 !important;
+  stroke-opacity: 0.8 !important;
+}
+
+html.dark .recharts-text,
+html.dark .recharts-cartesian-axis-tick-value {
+  fill: #94A3B8 !important;
+}
+
+html.dark .recharts-tooltip-cursor {
+  stroke: #475569 !important;
+}
+
+html.dark .recharts-default-tooltip {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Custom Tooltip in Dark Mode */
+html.dark .recharts-tooltip-wrapper > div,
+html.dark .custom-recharts-tooltip {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+/* Inputs, Selects, and Search in Dark Mode */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #111827 !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748B !important;
 }
 
 /* Custom scrollbar */
@@ -15,12 +250,23 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #F3F4F6;
+}
+html.dark ::-webkit-scrollbar-track {
+  background: #0B1120;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #CBD5E1;
   border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover {
+html.dark ::-webkit-scrollbar-thumb {
   background: #334155;
 }
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+

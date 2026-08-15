@@ -40,7 +40,13 @@ export async function fetchYahooQuote(ticker: string): Promise<{
     }
 
     const price = typeof meta.regularMarketPrice === 'number' && meta.regularMarketPrice > 0 ? meta.regularMarketPrice : null;
-    const prevClose = typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0 ? meta.chartPreviousClose : price;
+    const prevClose = typeof meta.regularMarketPreviousClose === 'number' && meta.regularMarketPreviousClose > 0
+      ? meta.regularMarketPreviousClose
+      : typeof meta.previousClose === 'number' && meta.previousClose > 0
+      ? meta.previousClose
+      : typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0 
+      ? meta.chartPreviousClose 
+      : price;
     const openPrice = typeof meta.regularMarketDayOpen === 'number' && meta.regularMarketDayOpen > 0 ? meta.regularMarketDayOpen : prevClose;
     const high52w = typeof meta.fiftyTwoWeekHigh === 'number' && meta.fiftyTwoWeekHigh > 0 ? meta.fiftyTwoWeekHigh : price;
     const low52w = typeof meta.fiftyTwoWeekLow === 'number' && meta.fiftyTwoWeekLow > 0 ? meta.fiftyTwoWeekLow : price;
