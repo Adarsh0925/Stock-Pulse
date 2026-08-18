@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
     background-color: #F3F4F6;
@@ -8,7 +10,7 @@
   }
   
   html.dark body {
-    background-color: #0F172A;
+    background-color: #0B1120;
     color: #F8FAFC;
   }
 
@@ -18,7 +20,7 @@
 }
 
 /* ==========================================================================
-   Comprehensive Dark Mode Engine (Dark Grey Theme)
+   Comprehensive, Cohesive Dark Theme Engine
    ========================================================================== */
 html.dark {
   color-scheme: dark;
@@ -32,7 +34,7 @@ html.dark .min-h-screen {
   color: #F8FAFC !important;
 }
 
-/* Cards & Surface Containers -> Dark Grey */
+/* Cards & Surface Containers -> Clean Slate Dark */
 html.dark .bg-white {
   background-color: #1E293B !important;
   color: #F8FAFC !important;
@@ -43,7 +45,7 @@ html.dark .bg-gray-50\/50,
 html.dark .bg-slate-50,
 html.dark .bg-gray-100,
 html.dark .bg-gray-100\/70 {
-  background-color: #111827 !important;
+  background-color: #0F172A !important;
   color: #F1F5F9 !important;
 }
 
@@ -52,16 +54,17 @@ html.dark .bg-slate-200 {
   background-color: #334155 !important;
 }
 
-/* Borders in Dark Grey */
+/* Borders in Dark Mode */
 html.dark .border-gray-200,
 html.dark .border-gray-100,
 html.dark .border-gray-300,
 html.dark .border-slate-200,
-html.dark .border-slate-100 {
+html.dark .border-slate-100,
+html.dark .border-slate-800 {
   border-color: #334155 !important;
 }
 
-/* Hover States -> MUST STAY DARK GREY, NEVER WHITE */
+/* Hover States */
 html.dark tr:hover,
 html.dark tbody tr:hover,
 html.dark .hover\:bg-gray-50:hover,
@@ -76,17 +79,17 @@ html.dark button.hover\:bg-gray-50:hover,
 html.dark button.hover\:bg-gray-100:hover,
 html.dark a.hover\:bg-gray-50:hover,
 html.dark a.hover\:bg-gray-100:hover {
-  background-color: #2D3748 !important;
+  background-color: #334155 !important;
   color: #F8FAFC !important;
 }
 
-html.dark button:hover:not(.bg-teal-700):not(.bg-emerald-600):not(.bg-red-600):not(.bg-indigo-600) {
-  background-color: #2D3748 !important;
-}
-
-/* Text Readability in Dark Mode (High Contrast, Never Dark Text) */
+/* Text Readability in Dark Mode */
 html.dark .text-gray-900,
-html.dark .text-gray-800 {
+html.dark .text-gray-800,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4 {
   color: #F8FAFC !important;
 }
 
@@ -117,47 +120,49 @@ html.dark .divide-slate-200 > * + * {
   border-color: #334155 !important;
 }
 
-/* Custom Highlight & Badge Accents in Dark Mode */
-html.dark .bg-teal-50 {
+/* Accents & Status Badges in Dark Mode */
+html.dark .bg-teal-50,
+html.dark .bg-teal-100,
+html.dark .bg-teal-200 {
   background-color: rgba(15, 118, 110, 0.25) !important;
   color: #2DD4BF !important;
   border-color: rgba(45, 212, 191, 0.3) !important;
 }
 
-html.dark .bg-teal-50 strong,
-html.dark .bg-teal-50 span {
-  color: #2DD4BF !important;
+html.dark .border-teal-100,
+html.dark .border-teal-200,
+html.dark .border-teal-300 {
+  border-color: rgba(45, 212, 191, 0.3) !important;
 }
 
 html.dark .text-teal-600,
 html.dark .text-teal-700,
-html.dark .text-teal-800 {
+html.dark .text-teal-800,
+html.dark .text-teal-900 {
   color: #2DD4BF !important;
 }
 
+/* Amber / Warning Badges (e.g. Market Closed) */
 html.dark .bg-amber-50,
-html.dark .bg-amber-50\/70,
-html.dark .bg-amber-50\/90 {
-  background-color: #1A1813 !important;
-  border-color: #452D12 !important;
-}
-
-html.dark .bg-amber-100 {
-  background-color: #2D2013 !important;
-  border-color: #63431D !important;
-}
-
+html.dark .bg-amber-100,
 html.dark .bg-amber-200,
-html.dark .bg-amber-200\/80 {
-  background-color: rgba(120, 53, 15, 0.45) !important;
-  border-color: rgba(217, 119, 6, 0.4) !important;
-  color: #FDE68A !important;
+html.dark .bg-amber-50\/70,
+html.dark .bg-amber-50\/90,
+html.dark .bg-yellow-50,
+html.dark .bg-yellow-100,
+html.dark .bg-yellow-200 {
+  background-color: rgba(180, 83, 9, 0.25) !important;
+  color: #FCD34D !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
 }
 
+html.dark .border-amber-100,
 html.dark .border-amber-200,
 html.dark .border-amber-300,
-html.dark .border-amber-300\/80 {
-  border-color: #63431D !important;
+html.dark .border-yellow-100,
+html.dark .border-yellow-200,
+html.dark .border-yellow-300 {
+  border-color: rgba(245, 158, 11, 0.35) !important;
 }
 
 html.dark .text-amber-500,
@@ -165,27 +170,61 @@ html.dark .text-amber-600,
 html.dark .text-amber-700,
 html.dark .text-amber-800,
 html.dark .text-amber-900,
-html.dark .text-amber-950 {
-  color: #FDE68A !important;
+html.dark .text-amber-950,
+html.dark .text-yellow-600,
+html.dark .text-yellow-700,
+html.dark .text-yellow-800 {
+  color: #FCD34D !important;
 }
 
-html.dark .bg-emerald-50 {
-  background-color: rgba(5, 150, 105, 0.2) !important;
+/* Emerald / Positive Badges (e.g. Market Live, Up Trend) */
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-100,
+html.dark .bg-emerald-200,
+html.dark .bg-green-50,
+html.dark .bg-green-100,
+html.dark .bg-green-200 {
+  background-color: rgba(5, 150, 105, 0.22) !important;
+  color: #34D399 !important;
   border-color: rgba(52, 211, 153, 0.35) !important;
 }
 
+html.dark .border-emerald-100,
+html.dark .border-emerald-200,
+html.dark .border-emerald-300,
+html.dark .border-green-100,
+html.dark .border-green-200,
+html.dark .border-green-300 {
+  border-color: rgba(52, 211, 153, 0.35) !important;
+}
+
+html.dark .text-emerald-500,
 html.dark .text-emerald-600,
 html.dark .text-emerald-700,
 html.dark .text-emerald-800,
-html.dark .text-emerald-900 {
+html.dark .text-emerald-900,
+html.dark .text-green-600,
+html.dark .text-green-700,
+html.dark .text-green-800 {
   color: #34D399 !important;
 }
 
-html.dark .bg-red-50 {
-  background-color: rgba(220, 38, 38, 0.2) !important;
+/* Red / Negative Badges (e.g. Down Trend, Sell) */
+html.dark .bg-red-50,
+html.dark .bg-red-100,
+html.dark .bg-red-200 {
+  background-color: rgba(220, 38, 38, 0.22) !important;
+  color: #F87171 !important;
   border-color: rgba(248, 113, 113, 0.35) !important;
 }
 
+html.dark .border-red-100,
+html.dark .border-red-200,
+html.dark .border-red-300 {
+  border-color: rgba(248, 113, 113, 0.35) !important;
+}
+
+html.dark .text-red-500,
 html.dark .text-red-600,
 html.dark .text-red-700,
 html.dark .text-red-800,
@@ -193,9 +232,7 @@ html.dark .text-red-900 {
   color: #F87171 !important;
 }
 
-/* ==========================================================================
-   Chart & Data Visualization Dark Mode Styling
-   ========================================================================== */
+/* Charts & Tooltips in Dark Mode */
 html.dark .recharts-surface {
   background-color: transparent !important;
 }
@@ -222,19 +259,10 @@ html.dark .recharts-default-tooltip {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Custom Tooltip in Dark Mode */
-html.dark .recharts-tooltip-wrapper > div,
-html.dark .custom-recharts-tooltip {
-  background-color: #1E293B !important;
-  border-color: #334155 !important;
-  color: #F8FAFC !important;
-}
-
-/* Inputs, Selects, and Search in Dark Mode */
 html.dark input,
 html.dark select,
 html.dark textarea {
-  background-color: #111827 !important;
+  background-color: #0F172A !important;
   border-color: #334155 !important;
   color: #F8FAFC !important;
 }

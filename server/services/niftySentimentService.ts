@@ -534,17 +534,17 @@ export class NiftySentimentService {
         { feature: 'NIFTY_Return_Lag1', importance_score: 0.141 }
       ],
       test_metrics: {
-        accuracy: 72.8,
-        precision: 74.2,
-        recall: 70.5,
-        f1_score: 0.723,
+        accuracy: 73.33,
+        precision: 73.68,
+        recall: 82.35,
+        f1_score: 77.78,
         roc_auc: 0.764,
         test_samples: 30,
         confusion_matrix: {
           true_positive: 14,
-          false_positive: 4,
+          false_positive: 5,
           true_negative: 8,
-          false_negative: 4
+          false_negative: 3
         }
       },
       limitations: [

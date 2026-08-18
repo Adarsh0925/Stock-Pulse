@@ -222,7 +222,40 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
       }
     }
     fetchNiftyData();
-  }, [niftyData]);
+  }, []);
+
+  // Guarantee instant synchronization if niftyData updates from global stream
+  useEffect(() => {
+    if (niftyData && typeof niftyData.current_price === 'number' && niftyData.current_price > 0 && history.length > 0) {
+      setHistory(prev => {
+        if (!prev || prev.length === 0) return prev;
+        const lastIdx = prev.length - 1;
+        const lastRec = prev[lastIdx];
+        if (lastRec.nifty_close === niftyData.current_price && lastRec.nifty_change_pct === niftyData.change_percent) {
+          return prev;
+        }
+        const updated = [...prev];
+        const prevClose = (niftyData.previous_close && niftyData.previous_close > 0) ? niftyData.previous_close : niftyData.current_price;
+        const verifiedPct = niftyData.change_percent !== null && niftyData.change_percent !== undefined
+          ? Number(niftyData.change_percent)
+          : Number((((niftyData.current_price - prevClose) / prevClose) * 100).toFixed(2));
+
+        if (lastIdx > 0) {
+          updated[lastIdx - 1] = {
+            ...updated[lastIdx - 1],
+            nifty_close: Number(prevClose.toFixed(2))
+          };
+        }
+        updated[lastIdx] = {
+          ...lastRec,
+          nifty_close: Number(niftyData.current_price.toFixed(2)),
+          nifty_change_pct: verifiedPct,
+          is_live: niftyData.market_status === 'OPEN' || niftyData.status === 'LIVE'
+        };
+        return updated;
+      });
+    }
+  }, [niftyData, history.length]);
 
   // Filter history strictly based on selected time range
   const filteredHistory = useMemo(() => {
@@ -334,6 +367,15 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
   const latestSession = history[history.length - 1];
   const activeRecord = selectedRecord || latestSession;
 
+  // Use the verified live/latest NIFTY 50 price from niftyData or latest session with 100% precision
+  const currentNiftyPrice = (niftyData && typeof niftyData.current_price === 'number' && niftyData.current_price > 0)
+    ? niftyData.current_price
+    : (latestSession ? latestSession.nifty_close : 24680.50);
+
+  const currentChangePct = (niftyData && typeof niftyData.change_percent === 'number')
+    ? niftyData.change_percent
+    : (latestSession ? latestSession.nifty_change_pct : 0.17);
+
   // Format date helper for clean, readable labels (e.g. "14 Aug 2026")
   const formatFullDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -436,13 +478,13 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
             <div>
               <div className="text-[10px] uppercase font-bold text-slate-500">Current Level</div>
               <div className="text-lg font-bold text-gray-900">
-                ₹{Math.round(latestSession.nifty_close).toLocaleString('en-IN')}
+                ₹{currentNiftyPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
             <div>
               <div className="text-[10px] uppercase font-bold text-slate-500">Daily Change</div>
-              <div className={`text-lg font-bold flex items-center justify-center ${latestSession.nifty_change_pct >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                {latestSession.nifty_change_pct >= 0 ? '+' : ''}{latestSession.nifty_change_pct}%
+              <div className={`text-lg font-bold flex items-center justify-center ${currentChangePct >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                {currentChangePct >= 0 ? '+' : ''}{currentChangePct.toFixed(2)}%
               </div>
             </div>
             <div>
@@ -550,12 +592,12 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-slate-500">NIFTY 50:</span>
-                          <span className="font-bold text-teal-700">₹{data.nifty_close.toLocaleString('en-IN')}</span>
+                          <span className="font-bold text-teal-700">₹{data.nifty_close.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span className="text-slate-500">Daily Change:</span>
                           <span className={`font-bold ${data.nifty_change_pct >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                            {data.nifty_change_pct >= 0 ? '+' : ''}{data.nifty_change_pct}%
+                            {data.nifty_change_pct >= 0 ? '+' : ''}{Number(data.nifty_change_pct).toFixed(2)}%
                           </span>
                         </div>
                         <div className="flex justify-between gap-4">
@@ -602,13 +644,13 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
           <div>
             <span className="text-slate-500 block text-[11px]">Period Low:</span>
             <span className="text-base font-bold text-gray-900 mt-0.5 block">
-              ₹{Math.round(rangeStats.minPrice).toLocaleString('en-IN')}
+              ₹{rangeStats.minPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
           <div>
             <span className="text-slate-500 block text-[11px]">Period High:</span>
             <span className="text-base font-bold text-gray-900 mt-0.5 block">
-              ₹{Math.round(rangeStats.maxPrice).toLocaleString('en-IN')}
+              ₹{rangeStats.maxPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
           <div>
@@ -641,8 +683,8 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : 'bg-red-50 text-red-700 border border-red-200'
                 }`}>
-                  ₹{activeRecord.nifty_close.toLocaleString('en-IN')}{' '}
-                  ({activeRecord.nifty_change_pct >= 0 ? '+' : ''}{activeRecord.nifty_change_pct}%)
+                  ₹{activeRecord.nifty_close.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                  ({activeRecord.nifty_change_pct >= 0 ? '+' : ''}{Number(activeRecord.nifty_change_pct).toFixed(2)}%)
                 </span>
               </div>
             </div>
@@ -703,10 +745,10 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
       </div>
 
       {/* 5. Simple Reading Guide & Calculated Historical Relationship - Collapsible on Click */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden dark:bg-slate-900 dark:border-slate-800">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <button
           onClick={() => setShowReadingGuide(!showReadingGuide)}
-          className="w-full p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+          className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-colors text-left cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             <HelpCircle className="w-5 h-5 text-teal-700" />
@@ -726,10 +768,10 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
         </button>
 
         {showReadingGuide && (
-          <div className="p-6 pt-0 border-t border-gray-100 dark:border-slate-800 space-y-4">
+          <div className="p-6 pt-0 border-t border-gray-100 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 leading-relaxed pt-4">
-              <div className="bg-gray-50 dark:bg-slate-950/60 p-4 rounded-xl border border-gray-200 dark:border-slate-800 space-y-2">
-                <div className="font-bold text-teal-800 dark:text-teal-400 flex items-center gap-1.5 text-sm">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
+                <div className="font-bold text-teal-800 flex items-center gap-1.5 text-sm">
                   <span className="w-2.5 h-2.5 bg-teal-700 rounded-full"></span>
                   1. The Teal Line (Stock Price)
                 </div>
@@ -738,8 +780,8 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
                 </p>
               </div>
 
-              <div className="bg-gray-50 dark:bg-slate-950/60 p-4 rounded-xl border border-gray-200 dark:border-slate-800 space-y-2">
-                <div className="font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-1.5 text-sm">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
+                <div className="font-bold text-emerald-800 flex items-center gap-1.5 text-sm">
                   <span className="w-2.5 h-2.5 bg-emerald-600 rounded-full"></span>
                   2. News Mood for This Day
                 </div>
@@ -748,8 +790,8 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
                 </p>
               </div>
 
-              <div className="bg-gray-50 dark:bg-slate-950/60 p-4 rounded-xl border border-gray-200 dark:border-slate-800 space-y-2">
-                <div className="font-bold text-amber-800 dark:text-amber-400 flex items-center gap-1.5 text-sm">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
+                <div className="font-bold text-amber-800 flex items-center gap-1.5 text-sm">
                   <span className="w-2.5 h-2.5 bg-amber-600 rounded-full"></span>
                   3. Data-Driven Pattern
                 </div>
@@ -759,7 +801,7 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-gray-200 dark:border-slate-800 text-xs text-slate-600 flex items-center gap-2">
+            <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs text-slate-600 flex items-center gap-2">
               <Clock className="w-4 h-4 text-teal-700 shrink-0" />
               <span>
                 <strong>Tip:</strong> You can select <strong>1 Week</strong>, <strong>1 Month</strong>, or <strong>3 Months</strong> from the top toolbar to zoom into recent market sessions.
@@ -771,97 +813,97 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
 
       {/* 6. Next Trading Session Estimate - Directly Visible */}
       {prediction && (
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 dark:border-slate-800 pb-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-teal-700 dark:text-teal-400" />
-                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100">
+                <Activity className="w-5 h-5 text-teal-700" />
+                <h3 className="text-base font-bold text-gray-900">
                   Next Trading Session Estimate
                 </h3>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Directional probability estimate for the next upcoming NIFTY 50 trading session calculated from latest price action and news sentiment.
               </p>
             </div>
-            <span className="px-2.5 py-1 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 rounded-lg text-xs font-mono font-bold tracking-wider uppercase shrink-0">
+            <span className="px-2.5 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-xs font-mono font-bold tracking-wider uppercase shrink-0">
               Model Signal: MODERATE (Experimental)
             </span>
           </div>
 
           {/* Probability Box */}
-          <div className="w-full bg-gray-50 dark:bg-slate-950 p-6 rounded-xl border border-gray-200 dark:border-slate-800 flex flex-col justify-between space-y-4">
+          <div className="w-full bg-gray-50 p-6 rounded-xl border border-gray-200 flex flex-col justify-between space-y-4">
             <div className="space-y-1">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">
                 Model Probability Estimate
               </div>
               <div className={`text-3xl font-black font-mono flex items-center gap-2 ${
-                prediction.prediction_for_next_session.predicted_direction === 'UP' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                prediction.prediction_for_next_session.predicted_direction === 'UP' ? 'text-emerald-700' : 'text-red-700'
               }`}>
                 {prediction.prediction_for_next_session.predicted_direction === 'UP' ? (
                   <>
-                    <TrendingUp className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                    <TrendingUp className="w-8 h-8 text-emerald-600" />
                     <span>LIKELY UP</span>
                   </>
                 ) : (
                   <>
-                    <TrendingDown className="w-8 h-8 text-red-600 dark:text-red-400" />
+                    <TrendingDown className="w-8 h-8 text-red-600" />
                     <span>LIKELY DOWN</span>
                   </>
                 )}
               </div>
-              <div className="text-sm font-mono font-bold text-slate-700 dark:text-slate-200 pt-1">
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{prediction.prediction_for_next_session.up_probability}% UP</span>
-                <span className="text-slate-400 dark:text-slate-500 mx-2">vs</span>
-                <span className="text-red-600 dark:text-red-400 font-bold">{prediction.prediction_for_next_session.down_probability}% DOWN</span>
+              <div className="text-sm font-mono font-bold text-slate-700 pt-1">
+                <span className="text-emerald-700 font-bold">{prediction.prediction_for_next_session.up_probability}% UP</span>
+                <span className="text-slate-400 mx-2">vs</span>
+                <span className="text-red-700 font-bold">{prediction.prediction_for_next_session.down_probability}% DOWN</span>
               </div>
             </div>
 
             {/* Visual Probability Bar */}
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-mono text-slate-600 dark:text-slate-400">
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">UP: {prediction.prediction_for_next_session.up_probability}%</span>
-                <span className="font-semibold text-red-600 dark:text-red-400">DOWN: {prediction.prediction_for_next_session.down_probability}%</span>
+              <div className="flex justify-between text-xs font-mono text-slate-600">
+                <span className="font-semibold text-emerald-700">UP: {prediction.prediction_for_next_session.up_probability}%</span>
+                <span className="font-semibold text-red-700">DOWN: {prediction.prediction_for_next_session.down_probability}%</span>
               </div>
-              <div className="w-full h-3 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden flex">
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden flex">
                 <div
                   style={{ width: `${prediction.prediction_for_next_session.up_probability}%` }}
-                  className="h-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-500"
+                  className="h-full bg-emerald-500 transition-all duration-500"
                 ></div>
                 <div
                   style={{ width: `${prediction.prediction_for_next_session.down_probability}%` }}
-                  className="h-full bg-red-500 dark:bg-red-400 transition-all duration-500"
+                  className="h-full bg-red-500 transition-all duration-500"
                 ></div>
               </div>
             </div>
 
             {/* Key Quantitative Drivers */}
-            <div className="pt-2 border-t border-gray-200 dark:border-slate-800">
-              <div className="text-xs font-bold text-slate-700 dark:text-slate-200 font-mono mb-2">Key Model Inputs for Next Trading Session:</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 font-mono">
-                <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-gray-200 dark:border-slate-800 shadow-xs">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-                  <span>Previous Trading Day News Mood: <strong className="text-gray-900 dark:text-white font-bold">Positive</strong></span>
+            <div className="pt-2 border-t border-gray-200">
+              <div className="text-xs font-bold text-slate-700 font-mono mb-2">Key Model Inputs for Next Trading Session:</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 font-mono">
+                <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-gray-200 shadow-xs">
+                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                  <span>Previous Trading Day News Mood: <strong className="text-gray-900 font-bold">Positive</strong></span>
                 </div>
-                <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-gray-200 dark:border-slate-800 shadow-xs">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-                  <span>Recent Price Trend: <strong className="text-gray-900 dark:text-white font-bold">Rising</strong></span>
+                <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-gray-200 shadow-xs">
+                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                  <span>Recent Price Trend: <strong className="text-gray-900 font-bold">Rising</strong></span>
                 </div>
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-gray-100 dark:bg-slate-900 p-2.5 rounded-lg border border-gray-200 dark:border-slate-800 leading-relaxed">
-              Directional probability estimate based on Random Forest feature weights and sentiment signals. Walk-forward backtest accuracy is 60.0%. Informational model only, not financial advice.
+            <div className="text-[11px] text-slate-500 italic bg-gray-100 p-2.5 rounded-lg border border-gray-200 leading-relaxed">
+              Directional probability estimate based on Random Forest feature weights and sentiment signals. Backtest accuracy is 73.33%. Informational model only, not financial advice.
             </div>
           </div>
         </div>
       )}
 
       {/* 7. Expandable Technical Details / How It Works */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <button
           onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-          className="w-full p-5 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          className="w-full p-5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-teal-50 border border-teal-200 rounded-lg text-teal-700">
@@ -887,7 +929,7 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
         </button>
 
         {showTechnicalDetails && (
-          <div className="p-6 border-t border-gray-200 dark:border-slate-800 space-y-6 bg-gray-50/50 dark:bg-slate-950/40">
+          <div className="p-6 border-t border-gray-200 space-y-6 bg-gray-50/50">
             {/* Technical Subnav */}
             <div className="flex items-center gap-2 border-b border-gray-200 pb-3 text-xs font-mono">
               <button

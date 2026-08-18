@@ -202,7 +202,7 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] text-[#111827] dark:bg-[#0B1120] dark:text-[#F8FAFC] font-sans flex flex-col selection:bg-teal-700 selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#F3F4F6] text-[#111827] font-sans flex flex-col selection:bg-teal-700 selection:text-white transition-colors duration-200">
       {/* Website Top Header & Navigation */}
       <Header
         niftyData={niftyData}
@@ -219,6 +219,8 @@ export default function App() {
         onToggleAdminMode={() => setIsAdminMode(!isAdminMode)}
         isSimpleView={isSimpleView}
         onToggleSimpleView={() => setIsSimpleView(!isSimpleView)}
+        theme={theme}
+        onToggleTheme={() => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))}
       />
 
       {/* Main Website Content Container */}

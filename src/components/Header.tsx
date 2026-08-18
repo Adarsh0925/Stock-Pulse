@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, RefreshCw, TrendingUp, TrendingDown, ShieldCheck, Activity, BarChart2, BookOpen, Globe, Lock, Newspaper, Sparkles, Calendar } from 'lucide-react';
+import { Search, RefreshCw, TrendingUp, TrendingDown, ShieldCheck, Activity, BarChart2, BookOpen, Globe, Lock, Newspaper, Sparkles, Calendar, Sun, Moon } from 'lucide-react';
 import { Nifty50Data, CompanySearchResult } from '../types';
 import { getClientSessionInfo } from '../utils/marketTimeValidator';
 
@@ -18,6 +18,8 @@ interface HeaderProps {
   onToggleAdminMode?: () => void;
   isSimpleView?: boolean;
   onToggleSimpleView?: () => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,6 +37,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleAdminMode,
   isSimpleView = true,
   onToggleSimpleView,
+  theme = 'light',
+  onToggleTheme,
 }) => {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -82,11 +86,11 @@ export const Header: React.FC<HeaderProps> = ({
           {niftyData && typeof niftyData.current_price === 'number' ? (
             <div className="flex items-center gap-2">
               <span className="text-gray-900 font-bold font-mono text-sm">
-                ₹{niftyData.current_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                ₹{niftyData.current_price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className={`flex items-center font-semibold font-mono text-xs ${isNiftyPositive ? 'text-emerald-600' : 'text-red-600'}`}>
                 {isNiftyPositive ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
-                {isNiftyPositive ? '+' : ''}{niftyData.change} ({isNiftyPositive ? '+' : ''}{niftyData.change_percent}%)
+                {isNiftyPositive ? '+' : ''}{Number(niftyData.change).toFixed(2)} ({isNiftyPositive ? '+' : ''}{Number(niftyData.change_percent).toFixed(2)}%)
               </span>
             </div>
           ) : (
@@ -99,8 +103,8 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
               isMarketOpen 
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
-                : 'bg-amber-100 text-amber-800 border border-amber-300'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
             }`}>
               {isMarketOpen ? '● Market Live' : 'Market Closed'}
             </span>
@@ -186,8 +190,28 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* Global Refresh Data Action */}
+        {/* Global Refresh Data Action & Theme Toggle */}
         <div className="flex items-center gap-2 self-end md:self-auto">
+          {onToggleTheme && (
+            <button
+              onClick={onToggleTheme}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 active:bg-gray-100 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 transition-all cursor-pointer shadow-sm"
+              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Light Theme</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Dark Theme</span>
+                </>
+              )}
+            </button>
+          )}
+
           <button
             onClick={onRefresh}
             disabled={isRefreshing}

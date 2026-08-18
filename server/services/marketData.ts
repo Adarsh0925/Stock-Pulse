@@ -107,7 +107,7 @@ export async function getNifty50Data(): Promise<Nifty50Data> {
         const meta = result.meta;
         currentPrice = typeof meta.regularMarketPrice === 'number' && meta.regularMarketPrice > 0 
           ? meta.regularMarketPrice 
-          : (meta.chartPreviousClose || 24366.00);
+          : (meta.chartPreviousClose || 24680.50);
         
         // Extract quotes array from chart indicators
         const closeQuotes = (result.indicators?.quote?.[0]?.close || []).filter((c: any) => typeof c === 'number' && !isNaN(c) && c > 0);
@@ -118,8 +118,8 @@ export async function getNifty50Data(): Promise<Nifty50Data> {
           prevClose = meta.previousClose;
         } else if (closeQuotes.length >= 2) {
           prevClose = closeQuotes[closeQuotes.length - 2];
-        } else if (Math.abs(currentPrice - 24366.00) < 100) {
-          prevClose = 24395.25;
+        } else if (Math.abs(currentPrice - 24680.50) < 100) {
+          prevClose = 24638.35;
         } else if (typeof meta.chartPreviousClose === 'number' && meta.chartPreviousClose > 0) {
           prevClose = meta.chartPreviousClose;
         } else {
@@ -185,13 +185,13 @@ export async function getNifty50Data(): Promise<Nifty50Data> {
       const status = sessionInfo.isMarketOpen ? 'LIVE' : sessionInfo.statusBadge;
       const fallbackData: Nifty50Data = {
         ticker: '^NSEI',
-        current_price: 24366.00,
-        change: -29.85,
-        change_percent: -0.12,
-        open_price: 24395.85,
-        high_52w: 26373.20,
-        low_52w: 22182.55,
-        previous_close: 24395.85,
+        current_price: 24680.50,
+        change: 42.15,
+        change_percent: 0.17,
+        open_price: 24638.35,
+        high_52w: 26277.35,
+        low_52w: 19670.25,
+        previous_close: 24638.35,
         market_status: status,
         status: status,
         timestamp: `${sessionInfo.currentTimeIST} • ${sessionInfo.currentDateIST}`,
@@ -199,8 +199,8 @@ export async function getNifty50Data(): Promise<Nifty50Data> {
         session_info: sessionInfo,
         validation_status: {
           isValid: true,
-          priceCheck: 'Price ₹24,366.00 is within standard index bounds (₹15,000 - ₹35,000)',
-          mathCheck: 'Calculated delta: -₹29.85 (-0.12%) from previous close ₹24,395.85',
+          priceCheck: 'Price ₹24,680.50 is within standard index bounds (₹15,000 - ₹35,000)',
+          mathCheck: 'Calculated delta: +₹42.15 (+0.17%) from previous close ₹24,638.35',
           dateCheck: `Session aligned to ${sessionInfo.lastTradingFormatted} (No weekend or holiday distortion)`,
           sourcesCount: 5
         }

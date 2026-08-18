@@ -208,7 +208,7 @@ export const ScreenerView: React.FC<ScreenerViewProps> = ({ onSelectCompany }) =
                 {filteredStocks.map((stock) => {
                   const isPos = stock.changePercent !== null && stock.changePercent >= 0;
                   return (
-                    <tr key={stock.ticker} className="hover:bg-gray-50/80 dark:hover:bg-slate-800/80 transition-colors group">
+                    <tr key={stock.ticker} className="hover:bg-gray-50/80 transition-colors group">
                       <td className="px-5 py-4">
                         <div className="font-bold text-gray-900 group-hover:text-teal-700 transition-colors text-sm">
                           {stock.name}

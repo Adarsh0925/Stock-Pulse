@@ -37,16 +37,30 @@ interface TreeNode {
   right?: TreeNode;
 }
 
+class SeededRandom {
+  private seed: number;
+  constructor(seed = 42) {
+    this.seed = Math.abs(seed) % 2147483647;
+    if (this.seed === 0) this.seed = 1;
+  }
+  next(): number {
+    this.seed = (this.seed * 16807) % 2147483647;
+    return (this.seed - 1) / 2147483646;
+  }
+}
+
 class RandomForestClassifier {
   private trees: TreeNode[] = [];
   private numTrees: number;
   private maxDepth: number;
   private minSamplesSplit: number;
+  private rng: SeededRandom;
 
-  constructor(numTrees = 60, maxDepth = 5, minSamplesSplit = 3) {
+  constructor(numTrees = 60, maxDepth = 5, minSamplesSplit = 3, seed = 42) {
     this.numTrees = numTrees;
     this.maxDepth = maxDepth;
     this.minSamplesSplit = minSamplesSplit;
+    this.rng = new SeededRandom(seed);
   }
 
   private calculateGini(labels: number[]): number {
@@ -81,7 +95,7 @@ class RandomForestClassifier {
     const featureIndices: number[] = [];
     const numToSelect = Math.max(3, Math.floor(Math.sqrt(numFeatures)) + 1);
     while (featureIndices.length < Math.min(numFeatures, numToSelect)) {
-      const idx = Math.floor(Math.random() * numFeatures);
+      const idx = Math.floor(this.rng.next() * numFeatures);
       if (!featureIndices.includes(idx)) featureIndices.push(idx);
     }
 
@@ -168,7 +182,7 @@ class RandomForestClassifier {
       const bootX: number[][] = [];
       const bootY: number[] = [];
       for (let i = 0; i < numSamples; i++) {
-        const randIdx = Math.floor(Math.random() * numSamples);
+        const randIdx = Math.floor(this.rng.next() * numSamples);
         bootX.push(X[randIdx]);
         bootY.push(y[randIdx]);
       }
@@ -339,8 +353,13 @@ export function runMLEngine(ticker: string, candles: Candle[]): MLPrediction {
   const testX = testRows.map(r => r.features);
   const testY = testRows.map(r => r.target);
 
-  // Train RandomForestClassifier with 80 trees and maxDepth 5
-  const rf = new RandomForestClassifier(80, 5, 3);
+  // Train RandomForestClassifier with 80 trees and maxDepth 5 (deterministic seed)
+  let seed = 42;
+  for (let c = 0; c < ticker.length; c++) {
+    seed = (seed * 31 + ticker.charCodeAt(c)) % 2147483647;
+  }
+  seed = (seed + candles.length) % 2147483647;
+  const rf = new RandomForestClassifier(80, 5, 3, seed);
   rf.fit(trainX, trainY);
 
   // Out-of-Sample Test Evaluation
