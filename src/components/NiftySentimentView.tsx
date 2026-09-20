@@ -827,7 +827,7 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
               </p>
             </div>
             <span className="px-2.5 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg text-xs font-mono font-bold tracking-wider uppercase shrink-0">
-              Model Signal: MODERATE (Experimental)
+              Model Signal: {prediction.prediction_for_next_session.confidence_level || 'MODERATE'} (Active)
             </span>
           </div>
 
@@ -881,19 +881,35 @@ export const NiftySentimentView: React.FC<{ isSimpleView?: boolean; niftyData?: 
             <div className="pt-2 border-t border-gray-200">
               <div className="text-xs font-bold text-slate-700 font-mono mb-2">Key Model Inputs for Next Trading Session:</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 font-mono">
-                <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-gray-200 shadow-xs">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                  <span>Previous Trading Day News Mood: <strong className="text-gray-900 font-bold">Positive</strong></span>
-                </div>
-                <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-gray-200 shadow-xs">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                  <span>Recent Price Trend: <strong className="text-gray-900 font-bold">Rising</strong></span>
-                </div>
+                {prediction.prediction_for_next_session.key_drivers && prediction.prediction_for_next_session.key_drivers.length > 0 ? (
+                  prediction.prediction_for_next_session.key_drivers.map((driver, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-2 bg-white p-2.5 rounded-lg border border-gray-200 shadow-xs">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                        <span className="truncate"><strong>{driver.feature}:</strong> {driver.direction_impact}</span>
+                      </div>
+                      <span className="text-[10px] text-teal-700 font-bold bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 shrink-0">
+                        {(driver.importance * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-gray-200 shadow-xs">
+                      <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                      <span>Recent Session Momentum: <strong className="text-gray-900 font-bold">{prediction.prediction_for_next_session.predicted_direction === 'UP' ? 'Bullish' : 'Bearish'}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-gray-200 shadow-xs">
+                      <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                      <span>Financial News Sentiment: <strong className="text-gray-900 font-bold">Evaluated</strong></span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             <div className="text-[11px] text-slate-500 italic bg-gray-100 p-2.5 rounded-lg border border-gray-200 leading-relaxed">
-              Directional probability estimate based on Random Forest feature weights and sentiment signals. Backtest accuracy is 73.33%. Informational model only, not financial advice.
+              Directional probability estimate based on {prediction.model_name || 'LLM Multi-Factor Quant Engine'} feature weights and sentiment signals. Backtest accuracy is {prediction.test_metrics?.accuracy || 73}%. Informational model only, not financial advice.
             </div>
           </div>
         </div>

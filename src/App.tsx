@@ -7,6 +7,8 @@ import { TechnicalAnalysisCard } from './components/TechnicalAnalysisCard';
 import { FundamentalsCard } from './components/FundamentalsCard';
 import { NewsNLPSection } from './components/NewsNLPSection';
 import { MLPredictionCard } from './components/MLPredictionCard';
+import { ValuationAndScenariosCard } from './components/ValuationAndScenariosCard';
+import { MultiHorizonAndGovernanceCard } from './components/MultiHorizonAndGovernanceCard';
 import { ProvenanceSection } from './components/ProvenanceSection';
 import { ScreenerView } from './components/ScreenerView';
 import { FinancialDictionaryView } from './components/FinancialDictionaryView';
@@ -16,7 +18,8 @@ import { MethodologyView } from './components/MethodologyView';
 import { NiftySentimentView } from './components/NiftySentimentView';
 import { Footer } from './components/Footer';
 import { Nifty50Data, CompanySearchResult, ResearchReport } from './types';
-import { AlertCircle, Building2, Globe2, ShieldCheck, Cpu, ArrowUpRight } from 'lucide-react';
+import { AlertCircle, Building2, Globe2, ShieldCheck, Cpu, ArrowUpRight, FileDown, Loader2 } from 'lucide-react';
+import { generateResearchReportPDF } from './utils/pdfExport';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('nifty-sentiment');
@@ -188,6 +191,22 @@ export default function App() {
     fetchResearchReport(selectedTicker, selectedCompanyName);
   };
 
+  // Handle Download PDF Research Report for Selected Company
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
+  const handleDownloadReport = () => {
+    if (!researchReport) return;
+    setIsGeneratingPdf(true);
+    setTimeout(() => {
+      try {
+        generateResearchReportPDF(researchReport, selectedCompanyName);
+      } catch (err) {
+        console.error('Error generating PDF report:', err);
+      } finally {
+        setIsGeneratingPdf(false);
+      }
+    }, 80);
+  };
+
   const sampleCompanies = [
     { ticker: 'HDFCBANK.NS', name: 'HDFC Bank' },
     { ticker: 'RELIANCE.NS', name: 'Reliance' },
@@ -262,9 +281,23 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                <Globe2 className="w-3.5 h-3.5 text-teal-700" />
-                <span>NSE India & US Exchanges</span>
+              <div className="flex items-center gap-3">
+                {researchReport && (
+                  <button
+                    id="btn-quick-download-report"
+                    onClick={handleDownloadReport}
+                    disabled={isGeneratingPdf}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white font-mono font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Download structured PDF Research Report for currently selected company"
+                  >
+                    {isGeneratingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+                    <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download Report (PDF)'}</span>
+                  </button>
+                )}
+                <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                  <Globe2 className="w-3.5 h-3.5 text-teal-700" />
+                  <span>NSE India & US Exchanges</span>
+                </div>
               </div>
             </div>
 
@@ -299,7 +332,12 @@ export default function App() {
             ) : researchReport ? (
               <div className="space-y-6">
                 {/* 1. Real Company Quote Header */}
-                <CompanyHeader quote={researchReport.quote} companyName={selectedCompanyName} />
+                <CompanyHeader 
+                  quote={researchReport.quote} 
+                  companyName={selectedCompanyName} 
+                  onDownloadReport={handleDownloadReport}
+                  isDownloadingPdf={isGeneratingPdf}
+                />
 
                 {/* 2. Transparent Research Score & Signal */}
                 <ResearchScoreCard
@@ -309,9 +347,26 @@ export default function App() {
                   components={researchReport.score_components}
                   timestamp={researchReport.timestamp}
                   isSimpleView={isSimpleView}
+                  scoringBreakdown={researchReport.fundamentals?.scoring_breakdown}
                 />
 
-                {/* 3. Historical Data & Technical Chart (Matplotlib Base64 + Recharts) */}
+                {/* 3. Valuation Target & Tactical Risk/Reward Scenarios */}
+                <ValuationAndScenariosCard
+                  valuation={researchReport.valuation}
+                  scenarioAnalysis={researchReport.scenario_analysis}
+                  ticker={selectedTicker}
+                  isBank={researchReport.fundamentals?.is_bank}
+                />
+
+                {/* 4. Multi-Horizon Time Horizon Outlook & Corporate Governance Risk */}
+                <MultiHorizonAndGovernanceCard
+                  multiHorizon={researchReport.multi_horizon_outlook}
+                  governanceRisk={researchReport.governance_risk}
+                  ticker={selectedTicker}
+                  companyName={selectedCompanyName}
+                />
+
+                {/* 5. Historical Data & Technical Chart (Matplotlib Base64 + Recharts) */}
                 <ChartSection
                   historicalData={researchReport.historical}
                   onSelectPeriod={handlePeriodChange}
@@ -319,10 +374,10 @@ export default function App() {
                   ticker={selectedTicker}
                 />
 
-                {/* 4. Technical Analysis & Price Trend */}
+                {/* 6. Technical Analysis & Price Trend */}
                 <TechnicalAnalysisCard technical={researchReport.technical} ticker={selectedTicker} isSimpleView={isSimpleView} />
 
-                {/* 5. Company News & NLP Sentiment Analysis */}
+                {/* 7. Company News & NLP Sentiment Analysis */}
                 <NewsNLPSection
                   news={researchReport.news}
                   nlp={researchReport.nlp}
@@ -332,10 +387,10 @@ export default function App() {
                   isSimpleView={isSimpleView}
                 />
 
-                {/* 6. Scikit-learn Machine Learning Prediction Engine */}
+                {/* 8. Scikit-learn Machine Learning Prediction Engine */}
                 <MLPredictionCard ml={researchReport.ml} ticker={selectedTicker} isSimpleView={isSimpleView} />
 
-                {/* 7. Company Financial Health & Fundamentals */}
+                {/* 9. Company Financial Health & Fundamentals */}
                 <FundamentalsCard fundamentals={researchReport.fundamentals} ticker={selectedTicker} isSimpleView={isSimpleView} />
               </div>
             ) : null}

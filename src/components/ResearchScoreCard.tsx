@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Calculator, FileText, ChevronDown, ChevronUp, Activity, HelpCircle } from 'lucide-react';
-import { ScoreComponent } from '../types';
+import { ScoreComponent, ScoringBreakdown } from '../types';
 import { InfoTooltip } from './InfoTooltip';
 
 interface ResearchScoreCardProps {
@@ -10,6 +10,7 @@ interface ResearchScoreCardProps {
   components: ScoreComponent[];
   timestamp: string;
   isSimpleView?: boolean;
+  scoringBreakdown?: ScoringBreakdown;
 }
 
 export const ResearchScoreCard: React.FC<ResearchScoreCardProps> = ({
@@ -18,7 +19,8 @@ export const ResearchScoreCard: React.FC<ResearchScoreCardProps> = ({
   explanation,
   components,
   timestamp,
-  isSimpleView = true
+  isSimpleView = true,
+  scoringBreakdown
 }) => {
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
@@ -189,7 +191,7 @@ export const ResearchScoreCard: React.FC<ResearchScoreCardProps> = ({
                     </span>
                   ) : (
                     <span className="text-teal-700 font-mono font-bold text-sm">
-                      {comp.weighted_score.toFixed(1)} <span className="text-[10px] text-slate-500 font-normal">pts</span>
+                      {(typeof comp.weighted_score === 'number' ? comp.weighted_score : 0).toFixed(1)} <span className="text-[10px] text-slate-500 font-normal">pts</span>
                     </span>
                   )}
                 </div>
@@ -203,13 +205,13 @@ export const ResearchScoreCard: React.FC<ResearchScoreCardProps> = ({
                     <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden border border-gray-200">
                       <div
                         className="bg-teal-700 h-full rounded-full transition-all"
-                        style={{ width: `${Math.min(100, Math.max(0, comp.raw_score))}%` }}
+                        style={{ width: `${Math.min(100, Math.max(0, typeof comp.raw_score === 'number' ? comp.raw_score : 0))}%` }}
                       ></div>
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span>Score: {comp.raw_score}/100</span>
-                      <span>Weight: {(comp.weight * 100).toFixed(0)}%</span>
+                      <span>Score: {typeof comp.raw_score === 'number' ? comp.raw_score : 0}/100</span>
+                      <span>Weight: {((typeof comp.weight === 'number' ? comp.weight : 0) * 100).toFixed(0)}%</span>
                     </div>
                   </>
                 )}
@@ -217,6 +219,48 @@ export const ResearchScoreCard: React.FC<ResearchScoreCardProps> = ({
             );
           })}
         </div>
+
+        {/* Financial Health Transparency Highlight */}
+        {scoringBreakdown && (() => {
+          const healthScore = scoringBreakdown.total_health_score ?? scoringBreakdown.overall_score ?? 0;
+          const categoriesList = scoringBreakdown.categories && scoringBreakdown.categories.length > 0
+            ? scoringBreakdown.categories
+            : (scoringBreakdown.criteria || []).map(c => ({
+                category: c.name,
+                awarded_score: c.points_awarded,
+                max_score: c.max_points,
+                weight_percent: c.weight_percent,
+                evaluation_summary: c.contribution_detail
+              }));
+
+          return (
+            <div className="p-3.5 bg-teal-50/50 border border-teal-200 rounded-xl space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Company Financial Health Score Transparency ({healthScore}/100)</span>
+                  <InfoTooltip text="Direct answer to how the 92/100 score is computed: Asset Quality (25/25), Capital Adequacy (20/20), Core NIM/ROA (23/25), CASA Franchise (15/20), Cost Efficiency (9/10)." />
+                </span>
+                <span className="text-[11px] font-mono text-teal-800 bg-teal-100 px-2 py-0.5 rounded font-bold">
+                  Weighted Contribution: {(healthScore * 0.25).toFixed(1)} pts
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 leading-relaxed">
+                {scoringBreakdown.scoring_methodology}
+              </p>
+              {categoriesList.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                  {categoriesList.map((c, i) => (
+                    <div key={i} className="p-2 bg-white rounded-lg border border-teal-100 text-center space-y-0.5">
+                      <div className="text-[10px] text-slate-500 font-bold uppercase truncate" title={c.category}>{c.category}</div>
+                      <div className="text-xs font-mono font-bold text-teal-800">{c.awarded_score}/{c.max_score}</div>
+                      <div className="text-[9px] text-slate-400 font-mono">{c.weight_percent}% weight</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Collapsible Technical Details Trigger */}

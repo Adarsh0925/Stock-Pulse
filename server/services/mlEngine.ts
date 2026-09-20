@@ -1,4 +1,5 @@
 import { Candle } from './marketData';
+import { predictStockWithLLM } from './geminiPredictionService';
 
 export interface MLPrediction {
   ticker: string;
@@ -458,4 +459,40 @@ export function runMLEngine(ticker: string, candles: Candle[]): MLPrediction {
     error_reason: null,
     ml_score: Number(mlScore.toFixed(2))
   };
+}
+
+/**
+ * Async Machine Learning Engine powered by LLM (Gemini 3.8 Flash) with quantitative fallback.
+ * Solves static prediction limitations by providing dynamic data-driven probabilistic inference.
+ */
+export async function runMLEngineAsync(
+  ticker: string,
+  candles: Candle[],
+  companyName?: string,
+  currentPrice?: number,
+  changePct?: number,
+  rsi?: number,
+  macdHist?: number,
+  newsSentimentScore?: number
+): Promise<MLPrediction> {
+  const price = currentPrice || (candles && candles.length > 0 ? candles[candles.length - 1].close : 100);
+  const prevPrice = candles && candles.length > 1 ? candles[candles.length - 2].close : price;
+  const pct = changePct !== undefined ? changePct : Number((((price - prevPrice) / prevPrice) * 100).toFixed(2));
+  const rsiVal = rsi !== undefined ? rsi : 52.0;
+  const macdVal = macdHist !== undefined ? macdHist : 0.0;
+
+  try {
+    return await predictStockWithLLM(
+      ticker,
+      companyName || ticker,
+      price,
+      pct,
+      rsiVal,
+      macdVal,
+      newsSentimentScore || 0
+    );
+  } catch (err) {
+    console.error(`LLM prediction for ${ticker} failed, falling back to Random Forest:`, err);
+    return runMLEngine(ticker, candles);
+  }
 }

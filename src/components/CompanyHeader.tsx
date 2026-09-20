@@ -1,13 +1,15 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Building2, Globe, Database, Clock, Layers } from 'lucide-react';
+import { TrendingUp, TrendingDown, Building2, Globe, Database, Clock, Layers, FileDown, Loader2 } from 'lucide-react';
 import { CompanyQuote } from '../types';
 
 interface CompanyHeaderProps {
   quote: CompanyQuote | null;
   companyName: string;
+  onDownloadReport?: () => void;
+  isDownloadingPdf?: boolean;
 }
 
-export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ quote, companyName }) => {
+export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ quote, companyName, onDownloadReport, isDownloadingPdf }) => {
   if (!quote || quote.status === 'DATA UNAVAILABLE') {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
@@ -54,9 +56,28 @@ export const CompanyHeader: React.FC<CompanyHeaderProps> = ({ quote, companyName
             </span>
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
-            {companyName || quote.name}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+              {companyName || quote.name}
+            </h2>
+            {onDownloadReport && (
+              <button
+                id="btn-download-pdf-report"
+                type="button"
+                onClick={onDownloadReport}
+                disabled={isDownloadingPdf}
+                className="inline-flex items-center gap-2 px-3.5 py-2 bg-teal-700 hover:bg-teal-800 active:bg-teal-900 text-white text-xs font-bold font-mono rounded-xl shadow-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+                title="Download structured PDF Research Report"
+              >
+                {isDownloadingPdf ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                ) : (
+                  <FileDown className="w-3.5 h-3.5 text-white" />
+                )}
+                <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download Report'}</span>
+              </button>
+            )}
+          </div>
 
           <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-mono">
             <span className="flex items-center gap-1 text-slate-500">

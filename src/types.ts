@@ -60,6 +60,11 @@ export interface CompanyQuote {
   previous_close: number | null;
   change: number | null;
   change_percent: number | null;
+  percent_change?: number | null;
+  high_price?: number | null;
+  low_price?: number | null;
+  fifty_two_week_high?: number | null;
+  fifty_two_week_low?: number | null;
   volume: number | null;
   market_cap: number | null;
   exchange: string;
@@ -101,13 +106,78 @@ export interface FundamentalMetric {
   source_url?: string | null;
   reporting_period?: string | null;
   publication_date?: string | null;
+  category?: string;
+  is_banking_metric?: boolean;
+}
+
+export interface BankingMetrics {
+  gross_npa?: number | null;
+  gross_npa_percent?: number | null;
+  net_npa?: number | null;
+  net_npa_percent?: number | null;
+  net_interest_margin?: number | null;
+  nim_percent?: number | null; // Net Interest Margin
+  casa_ratio?: number | null;
+  casa_ratio_percent?: number | null;
+  credit_growth_yoy?: number | null;
+  advances_growth_yoy?: number | null; // Credit / Loan growth
+  deposit_growth_yoy?: number | null;
+  deposits_growth_yoy?: number | null;
+  capital_adequacy_ratio?: number | null;
+  crar_percent?: number | null; // Capital Adequacy Ratio
+  tier_1_ratio?: number | null;
+  tier1_capital_percent?: number | null;
+  provision_coverage_ratio?: number | null; // PCR
+  slippage_ratio?: number | null;
+  return_on_assets?: number | null;
+  roa_percent?: number | null; // Return on Assets
+  cost_to_income_ratio?: number | null;
+  pat_growth_yoy?: number | null;
+}
+
+export interface ScoringCriterion {
+  name: string;
+  weight_percent: number;
+  points_awarded: number;
+  max_points: number;
+  metric_value: string;
+  benchmark_target: string;
+  peer_comparison: string;
+  contribution_detail: string;
+}
+
+export interface ScoringCategoryItem {
+  category: string;
+  weight_percent: number;
+  max_score: number;
+  awarded_score: number;
+  evaluation_summary: string;
+}
+
+export interface ScoringBreakdown {
+  overall_score?: number;
+  total_health_score?: number;
+  max_score?: number;
+  classification?: string;
+  scoring_methodology: string;
+  categories?: ScoringCategoryItem[];
+  criteria?: ScoringCriterion[];
+  peer_benchmarks_summary?: string;
+  historical_trend_summary?: string;
 }
 
 export interface FundamentalsData {
   ticker: string;
   company_type: string;
+  is_bank: boolean;
+  fundamental_score: number;
+  raw_health_score?: number;
   metrics: FundamentalMetric[];
+  banking_metrics?: BankingMetrics | null;
+  scoring_breakdown?: ScoringBreakdown | null;
   data_source: string;
+  period?: string;
+  publication_date?: string;
   timestamp: string;
   status: string;
   error_reason?: string | null;
@@ -181,6 +251,31 @@ export interface NLPData {
   error_reason?: string | null;
 }
 
+export interface MLEvidence {
+  total_observations?: number;
+  sample_count_sessions?: number;
+  data_period_years?: string;
+  training_split_methodology?: string;
+  validation_protocol?: string;
+  features_used?: string[];
+  features_list?: string[];
+  lookahead_leakage_control?: string;
+  stress_testing?: {
+    max_drawdown: string;
+    benchmark_max_drawdown: string;
+    period: string;
+  };
+  stress_test_drawdown?: string;
+  transaction_costs?: {
+    slippage_assumed_bps: number;
+    annual_turnover_approx: string;
+    net_sharpe_ratio: number;
+  };
+  transaction_cost_friction?: string;
+  simulated_sharpe_ratio?: number;
+  methodology_notes?: string;
+}
+
 export interface MLData {
   ticker: string;
   model_name: string;
@@ -194,6 +289,10 @@ export interface MLData {
   up_probability: number | null;
   down_probability: number | null;
   predicted_next_direction: 'UP' | 'DOWN' | null;
+  ml_score?: number;
+  confidence_status?: string;
+  is_reliable?: boolean;
+  ml_evidence?: MLEvidence;
   timestamp: string;
   status: string;
   error_reason?: string | null;
@@ -208,6 +307,74 @@ export interface ScoreComponent {
   status?: string;
 }
 
+export interface ValuationAnalysis {
+  fair_value_min: number;
+  fair_value_max: number;
+  fair_value_mid: number;
+  current_price: number;
+  discount_premium_percent: number;
+  valuation_status: 'UNDERVALUED' | 'FAIRLY VALUED' | 'OVERVALUED';
+  methodology_summary: string;
+  target_pb_ratio: number;
+  target_pe_ratio: number;
+  historical_5y_pb_mean: number;
+  technical_support_vs_fundamental_diff: string;
+}
+
+export interface ScenarioItem {
+  target_price: number;
+  upside_percent: number;
+  downside_percent?: number;
+  probability_percent: number;
+  rationale: string;
+  catalysts: string[];
+}
+
+export interface ScenarioAnalysis {
+  recommended_entry_zone: string;
+  tactical_stop_loss: number;
+  downside_risk_percent: number;
+  risk_reward_ratio: string;
+  base_case: ScenarioItem;
+  bull_case: ScenarioItem;
+  bear_case: ScenarioItem;
+}
+
+export interface HorizonItem {
+  horizon: string;
+  view: 'BULLISH' | 'NEUTRAL' | 'CAUTIOUS' | 'COMPOUNDING BUY';
+  target_range: string;
+  key_drivers: string;
+  risk_factors: string;
+}
+
+export interface MultiHorizonOutlook {
+  short_term: HorizonItem; // 1-5 Sessions
+  medium_term: HorizonItem; // 6-12 Months
+  long_term: HorizonItem; // 3-5 Years
+}
+
+export interface CorporateGovernanceRisk {
+  overall_governance_risk: 'LOW' | 'MODERATE' | 'ELEVATED';
+  ceo_succession: {
+    status: string;
+    details: string;
+    timeline: string;
+    candidates_status: string;
+  };
+  regulatory_compliance: {
+    rbi_status: string;
+    unsecured_risk_weight_impact: string;
+    audit_findings: string;
+  };
+  merger_integration: {
+    status: string;
+    progress_details: string;
+    balance_sheet_digest: string;
+  };
+  monitoring_guidance: string;
+}
+
 export interface ResearchReport {
   ticker: string;
   company_name: string;
@@ -219,6 +386,10 @@ export interface ResearchReport {
   nlp: NLPData;
   ml: MLData;
   score_components: ScoreComponent[];
+  valuation?: ValuationAnalysis;
+  scenario_analysis?: ScenarioAnalysis;
+  multi_horizon_outlook?: MultiHorizonOutlook;
+  governance_risk?: CorporateGovernanceRisk;
   final_research_score: number;
   research_signal: 'BUY' | 'HOLD' | 'SELL' | 'INSUFFICIENT DATA';
   signal_explanation: string;

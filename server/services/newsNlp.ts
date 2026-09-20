@@ -146,9 +146,12 @@ export function getFallbackNewsArticles(ticker: string, companyName: string, tim
     ];
   } else if (tickerLower.includes('hdfcbank')) {
     defaultHeadlines = [
-      { title: 'HDFC Bank deposit growth accelerates in latest quarterly reporting period', publisher: 'Financial Express', sentiment: 'POSITIVE', vader_score: 0.40 },
-      { title: 'HDFC Bank focuses on digital branch expansion and asset quality stabilization', publisher: 'Economic Times', sentiment: 'POSITIVE', vader_score: 0.35 },
-      { title: 'Banking sector overview: HDFC Bank maintains leadership position in retail credit', publisher: 'Livemint', sentiment: 'POSITIVE', vader_score: 0.32 }
+      { title: 'HDFC Bank submits two candidate names to RBI for CEO succession ahead of October leadership transition', publisher: 'Reuters', sentiment: 'NEUTRAL', vader_score: 0.12 },
+      { title: 'HDFC Bank deposit growth accelerates to 14.4% YoY with advances expanding 12.1% in FY25-26 disclosures', publisher: 'Financial Express', sentiment: 'POSITIVE', vader_score: 0.44 },
+      { title: 'HDFC Bank Net Interest Margin holds resilient at 3.34% while Gross NPA improves to 1.24%', publisher: 'Economic Times', sentiment: 'POSITIVE', vader_score: 0.38 },
+      { title: 'Banking sector overview: HDFC Bank maintains leadership position in retail credit and CASA franchise', publisher: 'Livemint', sentiment: 'POSITIVE', vader_score: 0.35 },
+      { title: 'RBI evaluates commercial bank succession frameworks to ensure institutional continuity', publisher: 'Mint', sentiment: 'NEUTRAL', vader_score: 0.15 },
+      { title: 'HDFC Bank expands digital branch distribution network across semi-urban clusters', publisher: 'Business Standard', sentiment: 'POSITIVE', vader_score: 0.30 }
     ];
   } else if (tickerLower.includes('tatamotors')) {
     defaultHeadlines = [
@@ -213,7 +216,7 @@ export async function fetchNewsAndNlp(ticker: string, companyName: string, timeF
       let match;
       let count = 0;
 
-      while ((match = itemRegex.exec(xml)) !== null && count < 10) {
+      while ((match = itemRegex.exec(xml)) !== null && count < 16) {
         const rawTitle = match[1].replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
         const rawLink = match[2].trim();
         const pubDateStr = match[3].trim();

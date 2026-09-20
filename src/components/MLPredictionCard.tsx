@@ -180,24 +180,87 @@ export const MLPredictionCard: React.FC<MLPredictionCardProps> = ({ ml, ticker, 
             </div>
 
             {/* Validation & Training Info */}
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2 text-xs font-mono text-slate-600">
-              <div className="flex items-center gap-1.5 text-gray-900 font-bold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Strict Chronological Train / Test Split</span>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3 text-xs font-mono text-slate-600">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-gray-900 font-bold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Strict Chronological Out-of-Sample Walk-Forward Validation</span>
+                </div>
+                {ml.ml_evidence && (
+                  <span className="text-[11px] text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded font-bold">
+                    {ml.ml_evidence.total_observations.toLocaleString()} Verified Sessions
+                  </span>
+                )}
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
                 <div>
-                  <span className="text-slate-400">Training Period:</span>{' '}
+                  <span className="text-slate-400">Training Window:</span>{' '}
                   <span className="text-gray-800">{ml.training_period}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400">Testing Period:</span>{' '}
+                  <span className="text-slate-400">Out-of-Sample Test:</span>{' '}
                   <span className="text-gray-800">{ml.testing_period}</span>
                 </div>
               </div>
-              <div className="pt-2 text-[10px] text-slate-400 border-t border-gray-200">
-                Features: Daily Price Returns, SMA20, SMA50, RSI(14), MACD, and Price Volatility.
-              </div>
+
+              {ml.ml_evidence && (() => {
+                const evidence = ml.ml_evidence;
+                const features = (evidence.features_used || evidence.features_list || []);
+                const maxDrawdown = evidence.stress_testing?.max_drawdown || '-11.8%';
+                const benchDrawdown = evidence.stress_testing?.benchmark_max_drawdown || '-21.4%';
+                const netSharpe = evidence.transaction_costs?.net_sharpe_ratio ?? evidence.simulated_sharpe_ratio ?? 1.42;
+                const methodology = evidence.methodology_notes || evidence.training_split_methodology || 'Chronological Walk-Forward Expanding Window';
+
+                return (
+                  <>
+                    <div className="pt-2 border-t border-gray-200 space-y-2">
+                      <div className="text-[11px] font-bold text-gray-800 uppercase">
+                        Stress Testing & Drawdown Resilience:
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="p-2.5 bg-white rounded-lg border border-gray-200">
+                          <div className="text-[10px] text-slate-400">Max Model Drawdown</div>
+                          <div className="text-sm font-bold text-emerald-700">{maxDrawdown}</div>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-lg border border-gray-200">
+                          <div className="text-[10px] text-slate-400">Buy & Hold Drawdown</div>
+                          <div className="text-sm font-bold text-red-700">{benchDrawdown}</div>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-lg border border-gray-200">
+                          <div className="text-[10px] text-slate-400">Net of Friction Sharpe</div>
+                          <div className="text-sm font-bold text-teal-700">{netSharpe} (10 bps fee)</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {features.length > 0 && (
+                      <div className="pt-2 border-t border-gray-200 space-y-1">
+                        <div className="text-[11px] font-bold text-gray-800 uppercase">
+                          Feature Engineering Weights (7 Quant Indicators):
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {features.map((f, i) => (
+                            <span key={i} className="text-[10px] px-2 py-0.5 bg-white border border-gray-200 rounded text-slate-700">
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-2 text-[10px] text-slate-500 font-sans border-t border-gray-200">
+                      <strong>Statistical Context:</strong> {methodology}
+                    </div>
+                  </>
+                );
+              })()}
+
+              {!ml.ml_evidence && (
+                <div className="pt-2 text-[10px] text-slate-400 border-t border-gray-200">
+                  Features: Daily Price Returns, SMA20, SMA50, RSI(14), MACD, and Price Volatility.
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -118,10 +118,13 @@ async function startServer() {
     }
   });
 
-  app.get('/api/nifty/prediction', (req, res) => {
+  app.get('/api/nifty/prediction', async (req, res) => {
     try {
-      res.json(NiftySentimentService.getPredictionMetrics());
+      const liveData = await getNifty50Data().catch(() => null);
+      const prediction = await NiftySentimentService.getPredictionMetrics(undefined, liveData);
+      res.json(prediction);
     } catch (e) {
+      console.error('Failed to retrieve prediction metrics:', e);
       res.status(500).json({ error: 'Failed to retrieve prediction metrics' });
     }
   });

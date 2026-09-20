@@ -15,6 +15,7 @@
 
 import { Nifty50Data, getHistoricalCandles, Candle } from './marketData';
 import { MarketTimeService } from './marketTimeService';
+import { predictNiftyWithLLM } from './geminiPredictionService';
 
 export interface SentimentOverview {
   research_title: string;
@@ -507,53 +508,11 @@ export class NiftySentimentService {
   }
 
   /**
-   * 4. Scikit-learn RandomForest model predictions & classification report metrics.
+   * 4. LLM-powered Machine Learning prediction for next trading session.
    */
-  public static getPredictionMetrics(): NiftyMLPredictionResponse {
-    return {
-      model_name: 'Scikit-Learn Random Forest Classifier',
-      target_variable: 'Directional Movement [UP / DOWN] for Next Trading Session',
-      prediction_for_next_session: {
-        predicted_direction: 'UP',
-        up_probability: 68.4,
-        down_probability: 31.6,
-        confidence_level: 'MODERATE',
-        key_drivers: [
-          { feature: 'VADER_Sentiment_Lag1', importance: 0.284, direction_impact: 'Bullish (+0.42 prior day sentiment)' },
-          { feature: 'NIFTY_RSI_14', importance: 0.218, direction_impact: 'Bullish (RSI at 56.4, constructive momentum)' },
-          { feature: 'Rolling_7D_Sentiment', importance: 0.192, direction_impact: 'Bullish (Sustained positive tone)' },
-          { feature: 'MACD_Histogram', importance: 0.165, direction_impact: 'Positive convergence (+24.5)' },
-          { feature: 'NIFTY_Return_Lag1', importance: 0.141, direction_impact: 'Neutral (+0.17% prior session gain)' }
-        ]
-      },
-      feature_importances: [
-        { feature: 'VADER_Sentiment_Lag1', importance_score: 0.284 },
-        { feature: 'NIFTY_RSI_14', importance_score: 0.218 },
-        { feature: 'Rolling_7D_Sentiment', importance_score: 0.192 },
-        { feature: 'MACD_Histogram', importance_score: 0.165 },
-        { feature: 'NIFTY_Return_Lag1', importance_score: 0.141 }
-      ],
-      test_metrics: {
-        accuracy: 73.33,
-        precision: 73.68,
-        recall: 82.35,
-        f1_score: 77.78,
-        roc_auc: 0.764,
-        test_samples: 30,
-        confusion_matrix: {
-          true_positive: 14,
-          false_positive: 5,
-          true_negative: 8,
-          false_negative: 3
-        }
-      },
-      limitations: [
-        'Overnight global macroeconomic shocks (crude oil spikes, central bank surprise announcements) can invert intraday trends.',
-        'Market liquidity shifts and high-frequency institutional rebalancing can overpower news sentiment signals.',
-        'VADER sentiment lexicon is English-oriented and does not account for complex multi-factor options gamma squeezes.'
-      ],
-      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
-    };
+  public static async getPredictionMetrics(history?: DailySentimentRecord[], liveData?: Nifty50Data | null): Promise<NiftyMLPredictionResponse> {
+    const historicalRecords = history && history.length > 0 ? history : await this.getSentimentHistory(liveData);
+    return await predictNiftyWithLLM(historicalRecords, liveData);
   }
 
   /**
